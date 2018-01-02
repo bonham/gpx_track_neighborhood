@@ -18,7 +18,7 @@ def main():
     pre_check()
 
     # parse args
-    (sourcedir, targetdir) = a_parse()
+    (sourcedir, targetdir, error) = a_parse()
 
     # get gpx filenames
     gpx_filelist = getfiles(sourcedir)
@@ -36,7 +36,7 @@ def main():
         targetfile = os.path.abspath(
                 os.path.join(targetdir, fname_base))
 
-        simplify_one(sourcefile, targetfile)
+        simplify_one(sourcefile, targetfile, error)
     
 
 
@@ -48,6 +48,7 @@ def a_parse():
             )
     parser.add_argument('source_directory')
     parser.add_argument('target_directory')
+    parser.add_argument('--error',default='0.001k', help="Simplification factor. Higher values simplify more. It corresponds to xx in gpsbabel -x simplify,error=xx Default value is 0.001k")
     args = parser.parse_args()
 
     sd = os.path.abspath(args.source_directory)
@@ -57,7 +58,7 @@ def a_parse():
         print("Source and target directory should not be the same")
         sys.exit(1)
     else:
-        return sd, td
+        return (sd, td, args.error)
 
 #--------------------------------
 def getfiles(directory):
@@ -76,13 +77,13 @@ def pre_check():
         print("Error: The command {} could not be found on your system".format(BABEL))
         sys.exit(1)
 
-def simplify_one(sourcefile, targetfile):
+def simplify_one(sourcefile, targetfile, error):
 
     cmd = (
             BABEL,
             "-i", "gpx",
             "-f", sourcefile,
-            "-x", "simplify,error=0.01k",
+            "-x", "simplify,error={}".format(error),
             "-o", "gpx",
             "-F", targetfile
             )

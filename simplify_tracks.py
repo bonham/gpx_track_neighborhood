@@ -18,15 +18,25 @@ def main():
     pre_check()
 
     # parse args
-    (directory, database_name) = a_parse()
+    (sourcedir, targetdir) = a_parse()
 
     # get gpx filenames
-    gpx_filelist = getfiles(directory)
+    gpx_filelist = getfiles(sourcedir)
+
     print("Number of gpx files: {}".format(len(gpx_filelist)))
 
-    # import files into database
-    print("(Re-) creating database {}".format(database_name))
-    ogrimport(gpx_filelist, database_name)
+    # run conversion
+    if not os.path.exists(targetdir):
+        print("Creating directory {}".format(targetdir))
+        os.makedirs(targetdir)
+
+    for sourcefile in gpx_filelist:
+
+        fname_base = os.path.basename(sourcefile)
+        targetfile = os.path.abspath(
+                os.path.join(targetdir, fname_base))
+
+        simplify_one(sourcefile, targetfile)
     
 
 
@@ -63,22 +73,21 @@ def pre_check():
     try:
         subprocess.call((BABEL, "-?"), stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
     except FileNotFoundError as e:
-        print("Error: The command {} could not be found on your system".format())BEL
+        print("Error: The command {} could not be found on your system".format(BABEL))
         sys.exit(1)
 
-def simplify(filelist, dest_dir):
-
+def simplify_one(sourcefile, targetfile):
 
     cmd = (
-            OGR2OGR,
-            "-append",
-            "-f",
-            "PostgreSQL",
-            ogr_connstring,
-            gpxfile
+            BABEL,
+            "-i", "gpx",
+            "-f", sourcefile,
+            "-x", "simplify,error=0.01k",
+            "-o", "gpx",
+            "-F", targetfile
             )
 
-    print("=== Processing {}".format(gpxfile))
+    print("=== Simplifying from {} to {}".format(sourcefile, targetfile))
     subprocess.check_call(cmd)
 
 

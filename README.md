@@ -16,6 +16,8 @@ This project does calculate proximity of multiple tracks from gpx files
 ## Dependencies
 
 * python 3.6 or higher
+* psycopg2 python library for postgres access
 * gpsbabel
 * GDAL
 * posgtres with postgis extension
+* Tested on windows, but may run on linux too

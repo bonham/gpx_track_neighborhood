@@ -22,14 +22,25 @@ def main():
                 "dbname={} user={}".format(database_name, PG_USER))
     cur = conn.cursor()
 
+    # connection for vacuum
+    conn_vac = psycopg2.connect(
+                "dbname={} user={}".format(database_name, PG_USER))
+
+    conn_vac.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    vac(conn_vac, "tracks")
+    vac(conn_vac, "track_points")
+
     print("Expanding track segments")
     expand_tracksegments(conn)
+    vac(conn_vac, "tracksegments")
 
     print("Creating circles from points")
     create_circles(conn)
+    vac(conn_vac, "circles")
 
     print("Calculating frequency")
     calc_frequency(conn)
+    vac(conn_vac, "frequency")
     
 
 
@@ -48,7 +59,7 @@ def a_parse():
 #--------------------------------
 def expand_tracksegments(conn):
 
-    with open('sql_1_expand_tracks.sql',"r") as f:
+    with open('sql/sql_1_expand_tracks.sql',"r") as f:
         sql = f.read()
         cur = conn.cursor()
         cur.execute(sql)
@@ -56,7 +67,7 @@ def expand_tracksegments(conn):
 
 def create_circles(conn):
 
-    with open('sql_2_create_circles.sql',"r") as f:
+    with open('sql/sql_2_create_circles.sql',"r") as f:
         sql = f.read()
         cur = conn.cursor()
         print("Execute")
@@ -70,7 +81,7 @@ def calc_frequency(conn):
     cur = conn.cursor()
 
     # create table
-    with open('sql_30_create_freq_tab.sql',"r") as f:
+    with open('sql/sql_30_create_freq_tab.sql',"r") as f:
         sql = f.read()
         cur.execute(sql)
         conn.commit()
@@ -78,7 +89,7 @@ def calc_frequency(conn):
     # read list of track ids
     sql2 = None
 
-    with open('sql_31_get_track_fid.sql',"r") as f:
+    with open('sql/sql_31_get_track_fid.sql',"r") as f:
         sql2 = f.read()
         
     cur.execute(sql2)
@@ -89,7 +100,7 @@ def calc_frequency(conn):
     # make intersections for each point
 
     sql3 = None
-    with open('sql_32_calcfreq_template.sql',"r") as f3:
+    with open('sql/sql_32_calcfreq_template.sql',"r") as f3:
         sql3 = f3.read()
 
     for (tid, name) in tracks:
@@ -98,6 +109,9 @@ def calc_frequency(conn):
         cur.execute(tsql)
         conn.commit()
 
+def vac(conn, table):
+    cur = conn.cursor()
+    cur.execute("vacuum analyze {}".format(table))
         
 
 

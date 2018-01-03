@@ -39,6 +39,6 @@ insert into tracksegments (
     	tr.ogc_fid,
     	(ST_Dump(tr.wkb_geometry)).geom as geom
 	from tracks tr
-)
+);
 
 

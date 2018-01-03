@@ -97,7 +97,7 @@ def calc_frequency(conn):
         tsql = sql3.format(tid)
         cur.execute(tsql)
         conn.commit()
-        
+
         
 
 

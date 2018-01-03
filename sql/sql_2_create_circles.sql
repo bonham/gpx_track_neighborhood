@@ -22,3 +22,5 @@ CREATE INDEX circles_wkb_geometry_geom_idx
     ON public.circles USING gist
     (wkb_geometry)
     TABLESPACE pg_default;
+
+

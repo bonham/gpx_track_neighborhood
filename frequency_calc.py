@@ -15,7 +15,7 @@ PG_USER="postgres"
 def main():
 
     # parse args
-    database_name = a_parse()
+    (database_name, radius) = a_parse()
 
     # connect to db
     conn = psycopg2.connect(
@@ -35,7 +35,7 @@ def main():
     vac(conn_vac, "tracksegments")
 
     print("Creating circles from points")
-    create_circles(conn)
+    create_circles(conn, radius)
     vac(conn_vac, "circles")
 
     print("Calculating frequency")
@@ -51,10 +51,10 @@ def a_parse():
                 'Load GPX files in specified directory into postgis database'
             )
     parser.add_argument('database')
+    parser.add_argument('--radius',help="Radius in meters around a trackpoint, where we search for nearby tracks. Default is 20m", default=20 )
     args = parser.parse_args()
 
-    database_name = args.database
-    return database_name
+    return args.database, args.radius
 
 #--------------------------------
 def expand_tracksegments(conn):
@@ -65,13 +65,13 @@ def expand_tracksegments(conn):
         cur.execute(sql)
         conn.commit()
 
-def create_circles(conn):
+def create_circles(conn, radius):
 
     with open('sql/sql_2_create_circles.sql',"r") as f:
         sql = f.read()
         cur = conn.cursor()
         print("Execute")
-        cur.execute(sql)
+        cur.execute(sql.format(radius))
         print("Commit")
         conn.commit()
         print("Commit done")

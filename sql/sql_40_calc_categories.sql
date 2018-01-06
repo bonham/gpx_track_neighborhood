@@ -12,6 +12,7 @@ create table public.frequency_lines
     constraint freq_lines_pk primary key (ogc_fid_start )
 )
 tablespace pg_default;
+create index on public.frequency_lines(ogc_fid_end);
 
 -- first population
 

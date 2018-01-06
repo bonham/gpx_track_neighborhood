@@ -23,10 +23,18 @@ with dump as (
 select
 	dump1.ogc_fid,
     dump1.track_fid,
-	count(case when (dump2.linestring is null) or not (ST_EndPoint(dump1.linestring) = ST_StartPoint(dump2.linestring )) THEN 1 END),
+	count(
+        case
+            when (dump2.linestring is null) or 
+            not (ST_EndPoint(dump1.linestring) = ST_StartPoint(dump2.linestring )) THEN 1 
+        END
+    ),
     dump1.wkb_geometry
 from dump as dump1 
-left join dump as dump2 on dump1.path = dump2.path-1 and dump1.trackseg_id = dump2.trackseg_id and dump1.ogc_fid = dump2.ogc_fid
+left join dump as dump2 on 
+    dump1.path = dump2.path-1 and 
+    dump1.trackseg_id = dump2.trackseg_id and 
+    dump1.ogc_fid = dump2.ogc_fid
 group by
 	dump1.ogc_fid,
     dump1.track_fid,

@@ -24,11 +24,14 @@ def main():
                 "dbname={} user={}".format(database_name, PG_USER))
     cur = conn.cursor()
 
-    # read ids and frequencies 
-    df = pdsql.read("select * from tracks",conn)
-    df = psql.read_sql("select ogc_fid,freq from frequency",conn)
-    
+    # calc
+    with open('sql/sql_40_calc_categories.sql',"r") as f:
+       sql1 = f.read()
+    cur.execute(sql1) 
 
+    with open('sql/sql_42_create_category_table.sql',"r") as f:
+       sql2 = f.read()
+    cur.execute(sql2) 
 
 #--------------------------------
 def a_parse():

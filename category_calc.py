@@ -33,6 +33,9 @@ def main():
        sql2 = f.read()
     cur.execute(sql2) 
 
+    for notice in conn.notices:
+        print(notice)
+
 #--------------------------------
 def a_parse():
     parser = argparse.ArgumentParser(

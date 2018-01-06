@@ -45,7 +45,7 @@ where
 group by fl.category_segment, fl.freq
 order by fl.category_segment, fl.freq
 );
-
+commit;
 -- insert logarithmic scale for 5 categories
 update  track_segment_freq_categories
 set category = round(log((select power(max(freq), 1./5) from track_segment_freq_categories), freq));

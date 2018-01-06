@@ -90,3 +90,9 @@ select ST_AsText(ST_LineMerge(ST_GeomFromText('MULTILINESTRING((0 0, 1 0),(1 0, 
 select ST_AsText(c) from (select ST_Collect(wkb_geometry) as c from tmpgeom) as x
 
 select d,i,s, sum(s) OVER ( order by i ROWS 1 PRECEDING) from e order by i ;
+
+--- problempunkte in hires
+
+939 / 940 - category_segment = 113
+line frequency ist 5
+punkt frequency ist 9 

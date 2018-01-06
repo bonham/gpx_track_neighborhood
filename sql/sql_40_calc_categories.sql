@@ -25,8 +25,10 @@ select f1.ogc_fid, f2.ogc_fid, f1.track_fid, f1.track_seg_id, LEAST(f1.freq,f2.f
 from fr f1
 join fr f2 on f1.ogc_fid = f2.ogc_fid - 1 and f1.track_fid = f2.track_fid and f1.track_seg_id  = f2.track_seg_id
 ) ;
+commit;
 
--- update last column
+-- update last column with a segment counter
+---
 drop sequence if exists category_segment_seq;
 create sequence category_segment_seq;
 --select nextval('category_segment_seq');
@@ -46,6 +48,6 @@ else currval('category_segment_seq') END as inc
 from frequency_lines f1
 left join frequency_lines f2 on f2.ogc_fid_end = f1.ogc_fid_start 
 where tf.ogc_fid_start = f1.ogc_fid_start
-) 
+) ;
 
 

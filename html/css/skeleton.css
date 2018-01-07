@@ -31,7 +31,8 @@
 .container {
   position: relative;
   width: 100%;
-  max-width: 960px;
+  height: 100%;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 20px;
   box-sizing: border-box; }
@@ -44,14 +45,14 @@
 /* For devices larger than 400px */
 @media (min-width: 400px) {
   .container {
-    width: 85%;
+    width: 95%;
     padding: 0; }
 }
 
 /* For devices larger than 550px */
 @media (min-width: 550px) {
   .container {
-    width: 80%; }
+    width: 95%; }
   .column,
   .columns {
     margin-left: 4%; }
@@ -416,3 +417,43 @@ there.
 
 /* Larger than Desktop HD */
 @media (min-width: 1200px) {}
+
+
+/* Sections
+--------------------------------------------------- */
+html, body {
+    height: 100%;
+}
+
+#maprow {
+	height: 100%;
+}
+
+
+#header nav {
+	text-align: center;
+	margin-top: 1em; }
+
+#header button {
+margin: 0 1em; }
+
+#header button.white-hover:hover {
+	background: #000;
+    color: #009be8; }
+	
+#header nav ul li {
+	display: inline-block; }
+
+#map {
+	height: 70%;
+}
+
+#map .u-full-width {
+  width: 100%;
+  box-sizing: border-box; }	
+  
+/* Make sure elements don't run outside containers (great for images in columns) */
+#map .u-max-full-width {
+  max-width: 100%;
+  box-sizing: border-box; }
+	 */

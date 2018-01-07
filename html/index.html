@@ -76,6 +76,25 @@
 		width: 2
 	  })
 	});
+	s1 = new ol.style.Style({
+	  stroke: new ol.style.Stroke({
+		color: 'orange',
+		width: 2
+	  })
+	});
+	s2 = new ol.style.Style({
+	  stroke: new ol.style.Stroke({
+		color: 'red',
+		width: 2
+	  })
+	});
+
+	s3 = new ol.style.Style({
+	  stroke: new ol.style.Stroke({
+		color: 'green',
+		width: 2
+	  })
+	});
 
       var vs0 = new ol.source.Vector({
 			format: new ol.format.GeoJSON(),
@@ -85,6 +104,14 @@
 			format: new ol.format.GeoJSON(),
 			url: 'geojson/g_1.json'
       });
+      var vs2 = new ol.source.Vector({
+			format: new ol.format.GeoJSON(),
+			url: 'geojson/g_2.json'
+      });
+      var vs3 = new ol.source.Vector({
+			format: new ol.format.GeoJSON(),
+			url: 'geojson/g_3.json'
+      });
 	
       var vl0 = new ol.layer.Vector({
         source: vs0,
@@ -93,8 +120,19 @@
 
       var vl1 = new ol.layer.Vector({
         source: vs1,
-        style: s0
+        style: s1
       });
+
+      var vl2 = new ol.layer.Vector({
+        source: vs2,
+        style: s2
+      });
+
+      var vl3 = new ol.layer.Vector({
+        source: vs3,
+        style: s3
+      });
+
 
       var map = new ol.Map({
         layers: [
@@ -102,7 +140,9 @@
             source: new ol.source.OSM()
           }),
           vl0,
-          vl1
+          vl1,
+		  vl2,
+		  vl3
         ],
         target: 'map',
         controls: ol.control.defaults({

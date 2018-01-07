@@ -69,11 +69,40 @@
   <!-- Openlayers
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
     <script>
+	
+	s0 = new ol.style.Style({
+	  stroke: new ol.style.Stroke({
+		color: 'brown',
+		width: 2
+	  })
+	});
+
+      var vs0 = new ol.source.Vector({
+			format: new ol.format.GeoJSON(),
+			url: 'geojson/g_0.json'
+      });
+      var vs1 = new ol.source.Vector({
+			format: new ol.format.GeoJSON(),
+			url: 'geojson/g_1.json'
+      });
+	
+      var vl0 = new ol.layer.Vector({
+        source: vs0,
+        style: s0
+      });
+
+      var vl1 = new ol.layer.Vector({
+        source: vs1,
+        style: s0
+      });
+
       var map = new ol.Map({
         layers: [
           new ol.layer.Tile({
             source: new ol.source.OSM()
-          })
+          }),
+          vl0,
+          vl1
         ],
         target: 'map',
         controls: ol.control.defaults({
@@ -85,7 +114,13 @@
           center: [0, 0],
           zoom: 2
         })
+
       });
+
+		vl0.getSource().on("change", function(evt) {
+			extent = vl0.getSource().getExtent();
+			map.getView().fit(extent, map.getSize());
+		});
 	</script>
 <!-- 	<script>
 		var map = new ol.Map({

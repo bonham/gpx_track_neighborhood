@@ -433,13 +433,13 @@ html, body {
 #header nav {
 	text-align: center;
 	margin-top: 1em; }
+	
+#header ul {
+	margin-bottom: 0; }
 
 #header button {
 margin: 0 1em; }
 
-#header button.white-hover:hover {
-	background: #000;
-    color: #009be8; }
 	
 #header nav ul li {
 	display: inline-block; }

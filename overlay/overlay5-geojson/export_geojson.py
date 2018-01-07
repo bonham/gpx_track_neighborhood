@@ -30,7 +30,7 @@ def main():
 
     for row in r:
         (cat, js) = row
-        fname = "g_{}".format(cat)
+        fname = "g_{}.json".format(cat)
         with open(fname,"w") as f:
             f.write(js)
 

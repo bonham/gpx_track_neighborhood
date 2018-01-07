@@ -85,14 +85,39 @@
         return styles[feature.getGeometry().getType()];
       };
 
-      var vectorSource = new ol.source.Vector({
+        s0 = new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: 'brown',
+            width: 2
+          }),
+          fill: new ol.style.Fill({
+            color: 'magenta'
+          }),
+          image: new ol.style.Circle({
+            radius: 10,
+            fill: null,
+            stroke: new ol.style.Stroke({
+              color: 'magenta'
+            })
+          })
+        });
+
+      var vs0 = new ol.source.Vector({
 			format: new ol.format.GeoJSON(),
-			url: 'g.json'
+			url: 'g_0.json'
+      });
+      var vs1 = new ol.source.Vector({
+			format: new ol.format.GeoJSON(),
+			url: 'g_1.json'
       });
 	  
+      var vl0 = new ol.layer.Vector({
+        source: vs0,
+        style: s0
+      });
 
-      var vectorLayer = new ol.layer.Vector({
-        source: vectorSource,
+      var vl1 = new ol.layer.Vector({
+        source: vs1,
         style: styleFunction
       });
 
@@ -101,7 +126,8 @@
           new ol.layer.Tile({
             source: new ol.source.OSM()
           }),
-          vectorLayer
+          vl0,
+          vl1
         ],
         target: 'map',
         controls: ol.control.defaults({
@@ -116,8 +142,8 @@
 
       });
 
-		vectorLayer.getSource().on("change", function(evt) {
-			extent = vectorLayer.getSource().getExtent();
+		vl0.getSource().on("change", function(evt) {
+			extent = vl0.getSource().getExtent();
 			map.getView().fit(extent, map.getSize());
 		});
 	  

@@ -173,10 +173,10 @@ input[type="reset"],
 input[type="button"] {
   display: inline-block;
   height: 38px;
-  padding: 0 30px;
+  /* padding: 0 20px; */
   color: #555;
   text-align: center;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 600;
   line-height: 38px;
   letter-spacing: .1rem;
@@ -188,6 +188,17 @@ input[type="button"] {
   border: 1px solid #bbb;
   cursor: pointer;
   box-sizing: border-box; }
+
+@media (min-width: 400px) {
+.button,
+button,
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+  font-size: 11px;	
+}	
+}  
+
 .button:hover,
 button:hover,
 input[type="submit"]:hover,
@@ -429,20 +440,41 @@ html, body {
 	height: 100%;
 }
 
+#header {
+	background-color: black; }
 
 #header nav {
-	text-align: center;
-	margin-top: 1em; }
+	text-align: left;
+	margin-top: 1em;
+	font-size: 0.8em;}
+
+@media (min-width: 400px) {
+
+#header nav {
+	font-size: 1em;}
+
+}
+
 	
 #header ul {
-	margin-bottom: 0; }
+	margin-bottom: 0;
+	padding-left: 1em}
 
-#header button {
-margin: 0 1em; }
+#header a {
+margin: 0 .2em;
+width: 8em;
+text-align: center; }
 
+#headertext {
+	margin-right: 1em;
+	color: white;
+	}
 	
 #header nav ul li {
 	display: inline-block; }
+	
+/* #header h5 {
+	} */
 
 #map {
 	height: 70%;
@@ -456,4 +488,28 @@ margin: 0 1em; }
 #map .u-max-full-width {
   max-width: 100%;
   box-sizing: border-box; }
-	 */
+ */
+ 
+#parent
+{
+  position: relative;
+}
+ 
+#child_1, #child_2
+{
+  display: none;
+  width: 200px;
+  height: 200px;
+  position: absolute;
+}
+ 
+#child_1
+{
+  background-color: red;
+}
+ 
+#child_2
+{
+  background-color: green;
+  margin: 10px;
+}

@@ -35,11 +35,19 @@
 
   <div class="container">
       <div class="row">
-		  <div id="header" class="eight columns offset-by-two">
+		  <div id="header" class="twelve columns">
 			<nav>
+
 				<ul>
-					<li><button class="button button-primary">Map</li>
-					<li><button class="button button-primary">Guide</li>
+					<li><span id="headertext">Elch's GPX Proximator</span></li>
+					<li><a 
+						class="button button-primary"
+						href="#"
+						onclick="toggle('child_1');">Guide</a></li>
+					<li><a 
+						class="button button-primary"
+						href="#"
+						onclick="toggle('child_2');">Solution</a></li>
 				</ul>
 			</nav>
 		  </div>
@@ -47,6 +55,10 @@
       <div id="maprow" class="row">
 		  <div id="map" class="twelve columns" >
 	  </div>
+		<div id="parent">
+		  <div class="article" id="child_1">xxxx</div>
+		  <div class="article" id="child_2">yyyy</div>
+		</div>
      </div>
 
 <!-- 	
@@ -170,7 +182,34 @@
 			extent = vl0.getSource().getExtent();
 			map.getView().fit(extent, map.getSize());
 		});
-	</script>
+
+		
+	function toggle(target){
+
+	  var artz = document.getElementsByClassName('article');
+
+	  var isVis, targ;
+	  if (target == '') {
+		isVis == true;
+	  } else {
+	  	targ = document.getElementById(target);  
+		isVis = targ.style.display=='block';
+	  };
+
+	  // hide all
+	  for(var i=0;i<artz.length;i++){
+		 artz[i].style.display = 'none';
+	  }
+  
+	  if (target == '') { return false; };
+	  
+	  // toggle current
+	  targ.style.display = isVis?'none':'block';
+
+	  return false;
+	}
+
+</script>
 <!-- 	<script>
 		var map = new ol.Map({
 			div: "map",

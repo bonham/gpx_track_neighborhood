@@ -51,15 +51,28 @@
 				</ul>
 			</nav>
 		  </div>
-		</div>
-      <div id="maprow" class="row">
-		  <div id="map" class="twelve columns" >
 	  </div>
-		<div id="parent">
-		  <div class="article" id="child_1">xxxx</div>
-		  <div class="article" id="child_2">yyyy</div>
-		</div>
-     </div>
+      <div id="maprow" class="row">
+		  <div id="map" class="twelve columns"/>
+	  </div>
+	  <div id="textbox" class="row">
+		<!-- <div class="four columns offset-by-four"> -->
+			<div id="parent">
+			  <div class="article" id="child_1">
+				<h5>No of passages</h5>
+				<hr class="hline categ1">1 passage<br/>
+				<hr class="hline categ2">2 to 4 passages<br/>
+				<hr class="hline categ3">5 to 10 passages<br/>
+				<hr class="hline categ4">11 to 20 passages<br/>
+				<hr class="hline categ5">21 to 20 passages<br/>
+			  </div>
+			  <div class="article" id="child_2">yyyy</div>
+			</div>
+		<!-- </div> -->
+	  </div>
+
+  </div>
+	 
 
 <!-- 	
     <div class="row">
@@ -210,28 +223,7 @@
 	}
 
 </script>
-<!-- 	<script>
-		var map = new ol.Map({
-			div: "map",
-			layers: [
-				new ol.Layer.OSM("OSM (without buffer)"),
-				new ol.Layer.OSM("OSM (with buffer)", null, {buffer: 2})
-			],
-			controls: [
-				new ol.Control.Navigation({
-					dragPanOptions: {
-						enableKinetic: true
-					}
-				}),
-				new ol.Control.PanZoom(),
-				new ol.Control.Attribution()
-			],
-			center: [0, 0],
-			zoom: 3
-		});
 
-		map.addControl(new ol.Control.LayerSwitcher());	
-	</script> -->
 
 <!-- End Document -------------------------------------------------- -->
 </body>

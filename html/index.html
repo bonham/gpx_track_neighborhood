@@ -3,41 +3,35 @@
 <head>
 
   <!-- Basic Page Needs
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  -------------------------------------------------- -->
   <meta charset="utf-8">
   <title>GPX Tracks of Elch</title>
-  <meta name="GPX Page with openlayers" content="">
+  <meta name="GPX Track Proximator" content="">
   <meta name="Elch" content="">
 
-  <!-- Mobile Specific Metas
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <!-- Mobile Specific Metas -------------------------------------------------- -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- FONT
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet" type="text/css">
+  <!-- FONT -------------------------------------------------- -->
+  <link href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet" type="text/css">
 
-  <!-- CSS
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <!-- CSS -------------------------------------------------- -->
   <link rel="stylesheet" href="css/normalize.css">
   <link rel="stylesheet" href="css/skeleton.css">
   
   <link rel="stylesheet" href="https://openlayers.org/en/v4.6.4/css/ol.css" type="text/css">
 
-  <!-- Favicon
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <!-- Favicon -------------------------------------------------- -->
   <link rel="icon" type="image/png" href="images/favicon.png">
 
-  <!-- Javascript
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->  
+  <!-- Javascript -------------------------------------------------- -->
   <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
   <script src="https://openlayers.org/en/v4.6.4/build/ol.js"></script>
 
 </head>
 <body>
 
-  <!-- Primary Page Layout
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <!-- Primary Page Layout -------------------------------------------------- -->
 
   <div class="container">
       <div class="row">
@@ -66,19 +60,18 @@
  -->
   </div>
 
-  <!-- Openlayers
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <!-- Openlayers -------------------------------------------------- -->
     <script>
 	
 	s0 = new ol.style.Style({
 	  stroke: new ol.style.Stroke({
-		color: 'brown',
+		color: 'orange',
 		width: 2
 	  })
 	});
 	s1 = new ol.style.Style({
 	  stroke: new ol.style.Stroke({
-		color: 'orange',
+		color: 'brown',
 		width: 2
 	  })
 	});
@@ -92,6 +85,12 @@
 	s3 = new ol.style.Style({
 	  stroke: new ol.style.Stroke({
 		color: 'green',
+		width: 2
+	  })
+	});
+	s4 = new ol.style.Style({
+	  stroke: new ol.style.Stroke({
+		color: 'blue',
 		width: 2
 	  })
 	});
@@ -111,6 +110,10 @@
       var vs3 = new ol.source.Vector({
 			format: new ol.format.GeoJSON(),
 			url: 'geojson/g_3.json'
+      });
+      var vs4 = new ol.source.Vector({
+			format: new ol.format.GeoJSON(),
+			url: 'geojson/g_4.json'
       });
 	
       var vl0 = new ol.layer.Vector({
@@ -133,6 +136,11 @@
         style: s3
       });
 
+      var vl4 = new ol.layer.Vector({
+        source: vs4,
+        style: s4
+      });
+
 
       var map = new ol.Map({
         layers: [
@@ -142,7 +150,8 @@
           vl0,
           vl1,
 		  vl2,
-		  vl3
+		  vl3,
+          vl4
         ],
         target: 'map',
         controls: ol.control.defaults({
@@ -185,7 +194,6 @@
 		map.addControl(new ol.Control.LayerSwitcher());	
 	</script> -->
 
-<!-- End Document
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<!-- End Document -------------------------------------------------- -->
 </body>
 </html>

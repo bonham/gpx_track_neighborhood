@@ -31,6 +31,7 @@ def main():
     for row in r:
         (cat, js) = row
         fname = "html/geojson/g_{}.json".format(cat)
+        print("Writing "+fname)
         with open(fname,"w") as f:
             f.write(js)
 

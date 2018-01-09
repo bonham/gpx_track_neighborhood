@@ -203,16 +203,18 @@
           }
         }),
         view: new ol.View({
-          center: [0, 0],
-          zoom: 2
+		  center: ol.proj.fromLonLat([8.697, 49.30]),
+          zoom: 12
         })
 
       });
 
+/* use this code if you want to autozoom to a layer
 		vl0.getSource().on("change", function(evt) {
 			extent = vl0.getSource().getExtent();
 			map.getView().fit(extent, map.getSize());
 		});
+*/
 
 		
 	function toggle(target){

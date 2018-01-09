@@ -10,6 +10,7 @@ The project does calculate proximity of multiple tracks from gpx files. It does 
 
 * Download the project from github
 * Install dependencies from below
+* Put all your gpx tracks in a directory
 Run all python commands below. Use --help to learn what arguments to provide
 * Run <strong>0-simplify-tracks.py</strong>. This will use gpsbabel to reduce gpx tracks.
 * Run <strong>1-gpx2postgis.py</strong> <source_dir> <target_dbname> to import gpx tracks to database. The database will be created or overwritten.

@@ -51,7 +51,7 @@ def a_parse():
                 'Load GPX files in specified directory into postgis database'
             )
     parser.add_argument('database')
-    parser.add_argument('--radius',help="Radius in meters around a trackpoint, where we search for nearby tracks. Default is 20m", default=20 )
+    parser.add_argument('--radius',help="Radius in meters around a trackpoint, where we search for nearby tracks. Default is 30m", default=30 )
     args = parser.parse_args()
 
     return args.database, args.radius

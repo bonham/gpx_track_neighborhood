@@ -4,10 +4,11 @@
 * You want to display them on a map
 * You want color coding depending on how often you passed the same roads
 
-The project does calculate proximity of multiple tracks from gpx files
+The project does calculate proximity of multiple tracks from gpx files. It does prepare static and mobile friendly html pages, including all gps data.
 
 ## Howto
 
+* Download the project from github
 * Install dependencies from below
 Run all python commands below. Use --help to learn what arguments to provide
 * Run <strong>0-simplify-tracks.py</strong>. This will use gpsbabel to reduce gpx tracks.
@@ -29,3 +30,5 @@ Developed and tested on Windows. Will very likely run on linux too.
 * Install psycopg2 python library for postgres access
 * Install gpsbabel from https://www.gpsbabel.org/
 * Install GDAL from http://www.gdal.org/ ( You need ogr2ogr command line tool )
+
+Apart from this we use the javascript map library from https://openlayers.org/. ( You don't need to install those )

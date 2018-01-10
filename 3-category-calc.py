@@ -1,11 +1,7 @@
 import sys
 import argparse
-import glob
 import os
-import subprocess
 import psycopg2
-import pandas as pd
-import pandas.io.sql as pdsql
 
 if sys.version_info < (3,6):
     raise RuntimeError("You must use python 3.6, You are using python {}.{}.{}".format(*sys.version_info[0:3]))

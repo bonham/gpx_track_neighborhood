@@ -30,10 +30,6 @@ def main():
     vac(conn_vac, "tracks")
     vac(conn_vac, "track_points")
 
-    print("Expanding track segments")
-    expand_tracksegments(conn)
-    vac(conn_vac, "tracksegments")
-
     print("Creating circles from points")
     create_circles(conn, radius)
     vac(conn_vac, "circles")

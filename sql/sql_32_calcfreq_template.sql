@@ -6,13 +6,12 @@ with dump as (
     select 
         tp.ogc_fid, 
         tp.track_fid, 
-        tr.tr_linestring_id as trackseg_id,
-    	tr.track_fid as tr,
+    	tr.ogc_fid as track_id,
 		-- Split the multilinestrings
     	(ST_Dump(ST_Multi(ST_Intersection(tr.wkb_geometry, ci.wkb_geometry )))).path[1] as path,
         (ST_Dump(ST_Multi(ST_Intersection(tr.wkb_geometry, ci.wkb_geometry )))).geom as linestring,
         tp.wkb_geometry
-    from tracksegments tr, circles ci, track_points tp 
+    from tracks tr, circles ci, track_points tp 
     where 
         tr.wkb_geometry && ci.wkb_geometry
         and tp.ogc_fid = ci.ogc_fid
@@ -33,8 +32,8 @@ select
 from dump as dump1 
 left join dump as dump2 on 
     dump1.path = dump2.path-1 and 
-    dump1.trackseg_id = dump2.trackseg_id and 
-    dump1.ogc_fid = dump2.ogc_fid
+    dump1.ogc_fid = dump2.ogc_fid and
+    dump1.track_id = dump2.track_id
 group by
 	dump1.ogc_fid,
     dump1.track_fid,

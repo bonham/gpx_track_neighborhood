@@ -33,20 +33,29 @@ def main():
 
     # read geojson
     #cur.execute("select ST_AsGeoJSON(wkb_geometry) from tracks where tracks.ogc_fid = 2")
-    cur.execute("select category, ST_AsGeoJSON(ST_Collect(wkb_geometry)) from track_segment_freq_categories group by category")
+    cur.execute("select category, ST_AsGeoJSON(ST_Collect(wkb_geometry)), min(freq), max(freq) from track_segment_freq_categories group by category order by category")
     r = cur.fetchall()
 
+    cat_frequencies = []
+
     for row in r:
-        (cat, js) = row
+        (cat, js, minfreq, maxfreq) = row
+        cat_frequencies.append( { "category": cat, "min": minfreq, "max": maxfreq } )
+        
         fname = os.path.join(geodir, "g_{}.json".format(cat))
         print("Writing "+fname)
         with open(fname,"w") as f:
             f.write(js)
 
-    #js = cur.fetchone()[0]
-    #print(js)
-#    j = json.loads(js)
-#    print(json.dumps(j,  indent=4))
+    # dump file for legend
+    fname = os.path.join(geodir, "legend.json")
+    print("Writing {}".format(fname))
+    legendfile = open(fname, "w")
+    json.dump(cat_frequencies, legendfile)
+
+    # print categories 
+    for item in cat_frequencies:
+        print("Category {}: {:3} - {:3}".format(item["category"], item["min"], item["max"]))
 
 
 

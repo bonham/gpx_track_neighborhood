@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
 
-  <!-- Basic Page Needs
-  -------------------------------------------------- -->
+  <!-- Basic Page Needs -------------------------------------------------- -->
   <meta charset="utf-8">
   <title>GPX Tracks of Elch</title>
   <meta name="GPX Track Proximator" content="">
@@ -27,6 +26,7 @@
   <!-- Javascript -------------------------------------------------- -->
   <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
   <script src="https://openlayers.org/en/v4.6.4/build/ol.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
 </head>
 <body>
@@ -60,11 +60,11 @@
 			<div id="parent">
 			  <div class="article" id="child_1">
 				<h5>No of passages</h5>
-				<hr class="hline categ1">1 passage<br/>
-				<hr class="hline categ2">2 to 4 passages<br/>
-				<hr class="hline categ3">5 to 13 passages<br/>
-				<hr class="hline categ4">14 to 39 passages<br/>
-				<hr class="hline categ5">40 to 66 passages<br/>
+				<hr class="hline categ1"><span id="c0">x</span><br/>
+				<hr class="hline categ2"><span id="c1">x</span><br/>
+				<hr class="hline categ3"><span id="c2">x</span><br/>
+				<hr class="hline categ4"><span id="c3">x</span><br/>
+				<hr class="hline categ5"><span id="c4">x</span><br/>
 			  </div>
 			  <div class="article" id="child_2">
 			  <h5>Solution</h5>
@@ -105,6 +105,25 @@
 
   <!-- Openlayers -------------------------------------------------- -->
     <script>
+	
+	// load legend
+	$(document).ready(function()	{
+	$.getJSON('geojson/legend.json', function(data) { 
+		for (var i = 0; i < data.length; i++) {
+			
+			min = data[i]["min"];
+			max = data[i]["max"];
+			if ( min == max ) {
+				text = min;
+			} else {
+				text = min + " - " + max;
+			};
+			identifier = '#c' + i;
+			$(identifier).text(text);
+		};
+		
+	});
+	});
 	
 	s0 = new ol.style.Style({
 	  stroke: new ol.style.Stroke({

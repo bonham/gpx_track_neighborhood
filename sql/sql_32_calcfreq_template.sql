@@ -11,7 +11,7 @@ with dump as (
     	(ST_Dump(ST_Multi(ST_Intersection(tr.wkb_geometry, ci.wkb_geometry )))).path[1] as path,
         (ST_Dump(ST_Multi(ST_Intersection(tr.wkb_geometry, ci.wkb_geometry )))).geom as linestring,
         tp.wkb_geometry
-    from tracks tr, circles ci, track_points tp 
+    from track_joinsegments tr, circles ci, track_points tp 
     where 
         tr.wkb_geometry && ci.wkb_geometry
         and tp.ogc_fid = ci.ogc_fid

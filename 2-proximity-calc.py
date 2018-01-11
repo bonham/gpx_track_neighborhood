@@ -11,6 +11,7 @@ if sys.version_info < (3,6):
 # constants
 
 PG_USER="postgres"
+RADIUS_DEFAULT=30
 
 def main():
 
@@ -30,6 +31,10 @@ def main():
     vac(conn_vac, "tracks")
     vac(conn_vac, "track_points")
 
+    print("Joining track segments")
+    joinsegments(conn, radius)
+    vac(conn_vac, "circles")
+
     print("Creating circles from points")
     create_circles(conn, radius)
     vac(conn_vac, "circles")
@@ -47,18 +52,18 @@ def a_parse():
                 'Load GPX files in specified directory into postgis database'
             )
     parser.add_argument('database')
-    parser.add_argument('--radius',help="Radius in meters around a trackpoint, where we search for nearby tracks. Default is 30m", default=30 )
+    parser.add_argument('--radius',help="Radius in meters around a trackpoint, where we search for nearby tracks. Default is {}m".format(RADIUS_DEFAULT), default=RADIUS_DEFAULT )
     args = parser.parse_args()
 
     return args.database, args.radius
 
 #--------------------------------
-def expand_tracksegments(conn):
+def joinsegments(conn, distance):
 
-    with open('sql/sql_1_expand_tracks.sql',"r") as f:
+    with open('sql/sql_1_joinsegments.sql',"r") as f:
         sql = f.read()
         cur = conn.cursor()
-        cur.execute(sql)
+        cur.execute(sql.format(distance))
         conn.commit()
 
 def create_circles(conn, radius):

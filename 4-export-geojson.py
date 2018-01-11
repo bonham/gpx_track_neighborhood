@@ -36,16 +36,23 @@ def main():
     cur.execute("select category, ST_AsGeoJSON(ST_Collect(wkb_geometry)), min(freq), max(freq) from track_segment_freq_categories group by category order by category")
     r = cur.fetchall()
 
+    # Attention: with low numbers, categories can have gaps. E.g. we could have category 0 2 3 4, but not 1
+
     cat_frequencies = []
 
+    i = 0
     for row in r:
-        (cat, js, minfreq, maxfreq) = row
-        cat_frequencies.append( { "category": cat, "min": minfreq, "max": maxfreq } )
+        (realcat, js, minfreq, maxfreq) = row
+
+        # category will be renumbered to i
+        cat_frequencies.append( { "category": i, "min": minfreq, "max": maxfreq } )
         
-        fname = os.path.join(geodir, "g_{}.json".format(cat))
+        fname = os.path.join(geodir, "g_{}.json".format(i))
         print("Writing "+fname)
         with open(fname,"w") as f:
             f.write(js)
+
+        i += 1;
 
     # dump file for legend
     fname = os.path.join(geodir, "legend.json")

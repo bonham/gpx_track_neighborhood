@@ -49,7 +49,7 @@ def a_parse():
     parser.add_argument('source_directory')
     parser.add_argument('target_directory')
     parser.add_argument('--error',default='0.001k', help="Simplification factor. Higher values simplify more. It corresponds to xx in gpsbabel -x simplify,error=xx Default value is 0.001k")
-    parser.add_argument('--distance',default='1k', help="Interpolation distance. Points will be added whenever two points are more than distance apart. Default is 1k.")
+    parser.add_argument('--distance',default='0.05k', help="Interpolation distance. Points will be added whenever two points are more than distance apart. Default is 0.05k.")
     args = parser.parse_args()
 
     sd = os.path.abspath(args.source_directory)
@@ -59,7 +59,7 @@ def a_parse():
         print("Source and target directory should not be the same")
         sys.exit(1)
     else:
-        return (sd, td, args.error)
+        return (sd, td, args.error, args.distance)
 
 #--------------------------------
 def getfiles(directory):

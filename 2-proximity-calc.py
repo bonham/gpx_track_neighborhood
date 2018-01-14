@@ -33,7 +33,7 @@ def main():
 
     print("Joining track segments")
     joinsegments(conn, radius)
-    vac(conn_vac, "circles")
+    vac(conn_vac, "track_joinsegments")
 
     print("Creating circles from points")
     create_circles(conn, radius)

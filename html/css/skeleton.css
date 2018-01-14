@@ -502,7 +502,7 @@ text-align: center; }
 {
   display: none;
   width: 200px;
-  height: 200px;
+  /* height: 200px; */
   position: absolute;
   margin-left: 4em;
   margin-top: 4em;
@@ -516,7 +516,7 @@ text-align: center; }
 
 #child_1
 {
-	padding-left: 1em;
+  padding-left: 1em;
   width: 200px;
   /* height: 200px; */
   padding-bottom: 2em;

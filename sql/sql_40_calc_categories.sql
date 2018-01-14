@@ -1,5 +1,10 @@
---- Create structures
+--- This SQL file is doing two things:
+---
+--- A) Assign the frequency number to all lines (derived from point freqency )
+--- B) Enumerate all points and identify segments by looking for consecutive 
+----   lines in same track, with same frequency
 
+--- Create table
 drop table if exists public.frequency_lines;
 create table public.frequency_lines
 (
@@ -15,15 +20,28 @@ tablespace pg_default;
 create index on public.frequency_lines(ogc_fid_end);
 
 -- first population
-
 insert into public.frequency_lines (
-with fr as (select tp.ogc_fid, tp.track_fid, tp.track_seg_id, f.freq 
+with fr as (
+    select 
+        tp.ogc_fid, 
+        tp.track_fid, 
+        tp.track_seg_id, 
+        f.freq 
       from track_points tp
       join frequency f on tp.ogc_fid = f.ogc_fid 
 )
-select f1.ogc_fid, f2.ogc_fid, f1.track_fid, f1.track_seg_id, LEAST(f1.freq,f2.freq) as cat
+select 
+    f1.ogc_fid, 
+    f2.ogc_fid, 
+    f1.track_fid, 
+    f1.track_seg_id, 
+    LEAST(f1.freq,f2.freq) as cat
 from fr f1
-join fr f2 on f1.ogc_fid = f2.ogc_fid - 1 and f1.track_fid = f2.track_fid and f1.track_seg_id  = f2.track_seg_id
+join fr f2 
+on 
+    f1.ogc_fid = f2.ogc_fid - 1 and 
+    f1.track_fid = f2.track_fid and 
+    f1.track_seg_id  = f2.track_seg_id
 ) ;
 commit;
 

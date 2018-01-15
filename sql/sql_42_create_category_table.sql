@@ -37,8 +37,8 @@ select
     ST_Multi(ST_Linemerge(ST_Collect(ST_MakeLine(tp1.wkb_geometry, tp2.wkb_geometry))))
 from
 	frequency_lines fl,
-    track_points tp1,
-    track_points tp2
+    newpoints tp1,
+    newpoints tp2
 where
 	tp1.ogc_fid = fl.ogc_fid_start  and
     tp2.ogc_fid = fl.ogc_fid_end

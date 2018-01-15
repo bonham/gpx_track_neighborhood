@@ -16,7 +16,7 @@ ALTER TABLE public.circles
 
 drop index if exists circles_wkb_geometry_geom_idx;
 
-insert into circles (select ogc_fid, ST_Buffer(tp.wkb_geometry::geography, {})::geometry from track_points as tp);
+insert into circles (select ogc_fid, ST_Buffer(tp.wkb_geometry::geography, {})::geometry from newpoints as tp);
 
 CREATE INDEX circles_wkb_geometry_geom_idx
     ON public.circles USING gist

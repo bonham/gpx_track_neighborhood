@@ -1,62 +1,85 @@
---- This sql does join the tracksegments of a track if the gap between the segments is below a threshold. Threshold should be aligned and should be not much bigger than the circle radius
+--- walk through all points, joín segments of same tracks which are not far apart
+--- by inserting points into segments and renumber the segment id
 
-DROP TABLE if exists public.track_joinsegments;
-CREATE TABLE public.track_joinsegments
+--- new table for points
+drop table if exists public.newpoints;
+create table public.newpoints
 (
-    ogc_fid integer NOT NULL,
-    wkb_geometry geometry(MultiLineString,4326),
-    CONSTRAINT track_joinsegments2 PRIMARY KEY (ogc_fid)
+    ogc_fid integer not NULL,
+    track_fid integer not null,
+    track_seg_id_old integer not null,
+    segment_id integer not null,
+    wkb_geometry geometry(Point,4326) not null,
+    constraint newpoints_pk primary key (ogc_fid )
 );
-CREATE INDEX track_joinsegments_wkb_geometry_geom_idx
-    ON public.track_joinsegments USING gist
-    (wkb_geometry);
- 
---------------------------------
+create index on newpoints(segment_id);
+CREATE INDEX newpoints_geom_idx
+    ON newpoints USING gist(wkb_geometry);
 
-insert into track_joinsegments
 
---- 'track' consists of multilinestrings:One linestring per track segment. Split this into sets of LINESTRING elements, one per track segment.
+--- sequences
+drop sequence if exists joinsegments_seq;
+create sequence joinsegments_seq;
 
---- unique identifier is ogcfid + p
-with dump as (
-    SELECT 
-    	ogc_fid, 
-    	name,  
-    	(ST_Dump(wkb_geometry)).geom as geom,
-    	(ST_Dump(wkb_geometry)).path[1] as p
-	FROM public.tracks ),
-
-completeset as 
-(( select
-	ogc_fid,
-    p,
-    1 as linecategory, --- original track segments have line category 1 ( for ordering the segments and connecting points later)
-    geom
-from dump
-union
----- make connecting line between track segments, but only if distance is below threshold
-select
-	d1.ogc_fid,
-	d1.p, 
-    2 as linecategory, --- connecting lines have category 2 
-	ST_MakeLine(ST_EndPoint(d1.geom), ST_StartPoint(d2.geom)) as geom
-from dump d1, dump d2 
-where
-	d1.ogc_fid = d2.ogc_fid and
-	d1.p = d2.p - 1 and
-   ST_Distance(ST_EndPoint(d1.geom)::geography, ST_StartPoint(d2.geom)::geography) < {}
-)
-
--- correct order is important: first order by tracks then by path number of 
--- linestrings. The path number of the connecting line 
--- has same path number of starting segment, but with linecategory 2
- order by ogc_fid, p, linecategory
-)
-select ogc_fid, ST_Multi(ST_LineMerge(ST_Collect(geom))) as wkb_geometry
-from completeset 
-group by ogc_fid
-having not ST_IsEmpty(ST_LineMerge(ST_Collect(geom))) -- ST_LineMerge returns empty if Linestring is single point
+---- insert
+insert into newpoints
+with base as (
+select 
+	tp1.ogc_fid,
+    tp1.track_fid,
+    tp1.track_seg_id as track_seg_id_old,
+    case 
+    	--- make a new segment marker when
+    	when 
+    		-- no predecessor ( first point )
+    		tp2.track_fid is null
+    		or
+    		-- new track starts
+    		tp1.track_fid != tp2.track_fid
+    		or 
+    		-- new segment starts, but only when distance bigger than threshold
+    		( 
+                (tp1.track_seg_id != tp2.track_seg_id)
+    			and (ST_Distance(tp1.wkb_geometry::geography, tp2.wkb_geometry::geography) >= 30)
+            )
+    	then 1 --- marker 
+    	else null 
+    end as marker,
+    tp1.wkb_geometry
+from track_points tp1 left join track_points tp2
+on
+    tp1.ogc_fid = tp2.ogc_fid + 1 -- vergleiche mit vorhergehendem punkt
 order by ogc_fid
-
+)
+select 
+	ogc_fid,
+    track_fid,
+    track_seg_id_old, 
+	case when marker = 1
+		then nextval('joinsegments_seq')
+		else currval('joinsegments_seq')
+	end as segment_id,
+    wkb_geometry
+from base;
+commit;
+--- new table for segments
+drop table if exists public.newsegments;
+create table public.newsegments
+(
+    segment_id integer not NULL,
+    track_fid integer not null,
+    wkb_geometry geometry(LineString,4326),
+    constraint newsegments_pk primary key (segment_id)
+);
+CREATE INDEX newsegments_geom_idx
+    ON newsegments USING gist(wkb_geometry);
+    
+--- insert into segment table
+insert into newsegments
+with base as (
+select * from newpoints order by ogc_fid ) 
+select segment_id, track_fid, ST_MakeLine(wkb_geometry)
+from base
+group by segment_id, track_fid
 
 

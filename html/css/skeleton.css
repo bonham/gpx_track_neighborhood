@@ -51,6 +51,7 @@
 /* For devices larger than 550px */
 @media (min-width: 550px) {
   .container {
+  }
   .column,
   .columns {
     margin-left: 4%; }
@@ -438,7 +439,6 @@ html, body {
 }
 
 #headerrow {
-	height: 10%;
 }
 #maprow {
 	height: 90%;

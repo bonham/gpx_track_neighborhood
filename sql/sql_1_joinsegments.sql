@@ -25,7 +25,7 @@ create sequence joinsegments_seq;
 insert into newpoints
 with base as (
 select 
-	tp1.ogc_fid,
+	tp1.point_id,
     tp1.track_fid,
     tp1.track_seg_id as track_seg_id_old,
     case 
@@ -46,13 +46,13 @@ select
     	else null 
     end as marker,
     tp1.wkb_geometry
-from track_points tp1 left join track_points tp2
+from all_track_points tp1 left join all_track_points tp2
 on
-    tp1.ogc_fid = tp2.ogc_fid + 1 -- vergleiche mit vorhergehendem punkt
-order by ogc_fid
+    tp1.point_id = tp2.point_id + 1 -- vergleiche mit vorhergehendem punkt
+order by point_id
 )
 select 
-	ogc_fid,
+	point_id as ogc_fid,
     track_fid,
     track_seg_id_old, 
 	case when marker = 1

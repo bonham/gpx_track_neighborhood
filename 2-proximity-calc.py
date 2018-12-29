@@ -12,6 +12,8 @@ if sys.version_info < (3,6):
 
 PG_USER="postgres"
 RADIUS_DEFAULT=30
+TRACKS_TABLE="all_tracks"
+TRACKPOINTS_TABLE="all_track_points"
 
 def main():
 
@@ -28,8 +30,8 @@ def main():
                 "dbname={} user={}".format(database_name, PG_USER))
 
     conn_vac.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    vac(conn_vac, "tracks")
-    vac(conn_vac, "track_points")
+    vac(conn_vac, TRACKS_TABLE)
+    vac(conn_vac, TRACKPOINTS_TABLE)
 
     print("Joining track segments")
     joinsegments(conn, radius)

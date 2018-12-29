@@ -3,7 +3,7 @@ import argparse
 import glob
 import os
 import subprocess
-import psycopg2
+import psycopg2 as pg2
 
 if sys.version_info < (3,6):
     raise RuntimeError("You must use python 3.6, You are using python {}.{}.{}".format(*sys.version_info[0:3]))
@@ -64,34 +64,78 @@ def pre_check():
         print("Error: The command {} could not be found on your system".format(OGR2OGR))
         sys.exit(1)
 
+class ExecuteSQLFile:
+
+    def __init__(self, connection):
+
+        SQL_RELATIVE_DIR = "sql"
+
+        self.sqlBase = os.path.join(
+                os.path.dirname(__file__),
+                SQL_RELATIVE_DIR
+                )
+
+        self.conn = connection
+        self.cursor = connection.cursor()
+
+    def fpath(self, fname):
+
+        p = os.path.join(
+                self.sqlBase,
+                fname)
+
+        return p
+
+
+    def execFile(self, fname, sqlArgs=[], commit=True):
+
+        fpath = self.fpath(fname)
+
+        print("Execute SQL file {}".format(fpath))
+
+        with open(fpath,"r") as f:
+            sql = f.read()
+            self.cursor.execute(sql, sqlArgs)
+
+        if commit:
+            self.conn.commit()
+        
+
+		
 def ogrimport(filelist, database_name):
 
     # connect to postgres db
     
-    conn = psycopg2.connect(
+    sysDBconn = pg2.connect(
                 "dbname={} user={}".format("postgres", PG_USER))
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    sysDBconn.set_isolation_level(pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
-    cur = conn.cursor()
+    sysDBcur = sysDBconn.cursor()
 
     # sql setup
     sql1 = "drop database if exists {0}".format(database_name)
     sql2 = "create database {0}".format(database_name)
 
-    cur.execute(sql1)
-    cur.execute(sql2)
-    conn.close()
+    sysDBcur.execute(sql1)
+    sysDBcur.execute(sql2)
+    sysDBconn.close()
 
     # connect to newly created db
-    conn = psycopg2.connect(
+    conn = pg2.connect(
                 "dbname={} user={}".format(database_name, PG_USER))
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    conn.set_isolation_level(pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
 
     # create postgis extension
     sql3 = "create extension postgis"
     cur.execute(sql3)
 
+    # pre-create layer tables
+    exf = ExecuteSQLFile(conn)
+    exf.execFile('sql_0_0_create_track_files_table.sql')
+    exf.execFile('sql_0_1_create_all_tracks_table.sql')
+    exf.execFile('sql_0_2_create_all_track_points_table.sql')
+	
     # ogr
     ogr_connstring = "PG:dbname={} user={}".format(database_name, PG_USER)
 
@@ -103,32 +147,24 @@ def ogrimport(filelist, database_name):
                 "-append",
                 "-f",
                 "PostgreSQL",
+                "-preserve_fid",
+                "-overwrite",
                 ogr_connstring,
-                gpxfile
+                gpxfile,
+                "track_points",
+                "tracks"
                 )
 
-        print("=== Processing {}".format(gpxfile))
+        print("=== Processing {} with command {}".format(gpxfile, " ".join(cmd)))
         subprocess.check_call(cmd)
 
-        # dirty workaround for a bug: set track_fid
+        sql4 = "select nextval('track_files_seq')"
+        cur.execute(sql4)
+        file_id = cur.fetchone()[0]
 
-        # determine last track feature id
-        cur.execute("select max(ogc_fid) from public.tracks")
-        r = cur.fetchone()
-        max_track_fid = r[0]
-        print("Track fid: {}".format(max_track_fid))
-
-        # set track_fid for all new trackpoints accordingly
-        sql = "update track_points set track_fid = {} where track_fid = 0".format(max_track_fid)
-        cur.execute(sql)
-
-        # set name of track
-        trackname = os.path.basename(gpxfile)
-        sql = "update tracks set name = '{}' where ogc_fid = {}".format(trackname, max_track_fid)
-        cur.execute(sql)
-
-
-
+        exf.execFile('sql_0_5_insert_track_file.sql', [file_id, gpxfile])
+        exf.execFile('sql_0_6_insert_all_tracks.sql', [file_id])
+        exf.execFile('sql_0_7_insert_all_trackpoints.sql', [file_id])
 
 
 if __name__ == "__main__":

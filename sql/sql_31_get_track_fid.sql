@@ -1,1 +1,1 @@
-select ogc_fid, name from tracks order by ogc_fid
+select track_id, name from all_tracks order by track_id

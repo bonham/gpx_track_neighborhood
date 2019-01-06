@@ -32,5 +32,5 @@ Developed and tested on Windows. Will very likely run on linux too.
 * Install psycopg2 python library for postgres access
 * Install gpsbabel from https://www.gpsbabel.org/
 * Install GDAL from http://www.gdal.org/ ( You need ogr2ogr command line tool )
-* Install node.js 10.15.0
-* All dependencies in [package.json](html/package.json)
+* Install node.js 10.15.0 ( with npm )
+* cd to `html` subdir. Then install all dependencies in [package.json](html/package.json) by running `npm install`

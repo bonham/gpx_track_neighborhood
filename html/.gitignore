@@ -1,0 +1,6 @@
+node-modules
+dist
+static
+startserver.bat
+images
+.cache

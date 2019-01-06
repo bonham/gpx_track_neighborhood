@@ -1,0 +1,6 @@
+{
+    "extends": "strongloop",
+    "parserOptions": {
+        "sourceType": "module"
+    }
+}

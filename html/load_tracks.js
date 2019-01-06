@@ -1,3 +1,6 @@
+/* Eslint directives following: */
+/* global document */
+/* global window */
 var jquery = require('jquery');
 var $ = jquery;
 import 'ol/ol.css';
@@ -65,8 +68,7 @@ for (var i = 0; i < colors.length; i++) {
 }
 
 
-var map;
-map = new Map({
+var map = new Map({
   layers: drawLayers,
   target: 'map',
   /*
@@ -82,14 +84,12 @@ map = new Map({
   }),
 
 });
-
 /* use this code if you want to autozoom to a layer
     vl0.getSource().on('change', function(evt) {
         extent = vl0.getSource().getExtent();
         map.getView().fit(extent, map.getSize());
     });
     */
-
 
 $('#but_guide').click(function(event) {
   $('#child_1').toggle();
@@ -101,7 +101,11 @@ $('#but_solution').click(function(event) {
   $('#child_1').hide();
   event.stopPropagation();
 });
-$(window).click(function() {
+
+function hidePopups(event) {
   $('#child_1').hide();
   $('#child_2').hide();
-});
+  console.log(event);
+};
+map.addEventListener('click', hidePopups);
+$(window).click(hidePopups);

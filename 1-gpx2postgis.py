@@ -91,7 +91,7 @@ class ExecuteSQLFile:
 
         fpath = self.fpath(fname)
 
-        print("Execute SQL file {}".format(fpath))
+        #print("Execute SQL file {}".format(fpath))
 
         with open(fpath,"r") as f:
             sql = f.read()

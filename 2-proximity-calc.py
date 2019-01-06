@@ -98,7 +98,6 @@ def calc_frequency(conn):
         
     cur.execute(sql2)
     tracks = cur.fetchall()
-#    track_ids = [(x[0] for x in r]
     num_ids = len(tracks)
 
     # make intersections for each point
@@ -107,11 +106,31 @@ def calc_frequency(conn):
     with open('sql/sql_32_calcfreq_template.sql',"r") as f3:
         sql3 = f3.read()
 
-    for (tid, name) in tracks:
-        print("Intersecting for track id {}/{} {}".format(tid, num_ids, name))
+    for (tid, name, file_path) in tracks:
+
+        fname = os.path.basename(file_path)
+        print("")
+        print("Intersecting for track id {}/{} {} {}".format(tid, num_ids, str(name), fname))
+        printstats(conn, tid)
         tsql = sql3.format(tid)
         cur.execute(tsql)
         conn.commit()
+
+def printstats(conn, track_fid):
+
+    sqlTempl = None
+    with open('sql/sql_32_1_intersect_stats.sql',"r") as f:
+        sqlTempl = f.read()
+
+    cur = conn.cursor()
+    cur.execute(sqlTempl.format(track_fid))
+    r = cur.fetchall()
+
+    print("Intersecting with:")
+    for (numpoints, fpath, tname, intersect_track_fid) in r:
+
+        fname = os.path.basename(fpath)
+        print("{:5d} {:30s} {}".format(numpoints, fname, tname))
 
 def vac(conn, table):
     cur = conn.cursor()

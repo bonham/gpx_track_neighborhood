@@ -23,7 +23,7 @@ def main():
                 "dbname={} user={}".format(database_name, PG_USER))
     cur = conn.cursor()
 
-    geodir = os.path.normpath("html/geojson")
+    geodir = os.path.normpath("html/static/geojson")
     oldfiles = glob.glob(os.path.join(geodir,'*'))
     for remove_file in oldfiles:
         print("Deleting {}".format(remove_file))

@@ -17,8 +17,9 @@ Run all python commands below. Use --help to learn what arguments to provide
 * Run <strong>2-proximity-calc.py</strong> to calculate intersections of gpx tracks.
 * Run <strong>3-category-calc.py</strong> to calculate color categories.
 * Run <strong>4-export-geojson.py</strong> to create json files for html pages.
+* cd to subdirectory `html` and run `npm run build`. See [details here](html/README.md)
 
-The finished web pages are in subdirectory <strong>html</strong>. Push all files from that folder to a webserver and open it in browser. ( Firefox can open it also locally, but not Chrome. For Chrome you can start local webserver from html directory with <strong>startserver.bat</strong>)
+The finished web pages are in subdirectory <strong>html/dist</strong>. Push all files from that folder to a webserver and open it in browser. ( Firefox can open it also locally, but not Chrome. For Chrome you can start local webserver from html directory with <strong>startserver.bat</strong>)
 
 ## Platforms
 
@@ -31,5 +32,5 @@ Developed and tested on Windows. Will very likely run on linux too.
 * Install psycopg2 python library for postgres access
 * Install gpsbabel from https://www.gpsbabel.org/
 * Install GDAL from http://www.gdal.org/ ( You need ogr2ogr command line tool )
-
-Apart from this we use the javascript map library from https://openlayers.org/. ( You don't need to install those )
+* Install node.js 10.15.0
+* All dependencies in [package.json](html/package.json)

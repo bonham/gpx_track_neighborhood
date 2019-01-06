@@ -1,4 +1,3 @@
-var polyfill = require('polyfill');
 var jquery = require('jquery');
 var $ = jquery;
 import 'ol/ol.css';
@@ -12,13 +11,6 @@ import GeoJSON from 'ol/format/GeoJSON';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import {fromLonLat} from 'ol/proj';
-import WebFont from 'webfontloader';
-
-WebFont.load({
-  google: {
-    families: ['Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic'],
-  },
-});
 
 $(document).ready(function()	{
   $.getJSON('geojson/legend.json', function(data) {

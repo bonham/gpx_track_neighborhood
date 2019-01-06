@@ -30,14 +30,22 @@ def main():
         print("Creating directory {}".format(targetdir))
         os.makedirs(targetdir)
 
+    failed = []
     for sourcefile in gpx_filelist:
 
         fname_base = os.path.basename(sourcefile)
         targetfile = os.path.abspath(
                 os.path.join(targetdir, fname_base))
 
-        simplify_one(sourcefile, targetfile, error, distance)
-    
+        success = simplify_one(sourcefile, targetfile, error, distance)
+        if not success:
+            failed.append(sourcefile)
+
+    if failed:
+        print("")
+        print("Operation failed for the following files:")
+        print("")
+        print("\n".join(failed))
 
 
 #--------------------------------
@@ -91,7 +99,13 @@ def simplify_one(sourcefile, targetfile, error, distance):
             )
 
     print("=== Simplifying from {} to {}".format(sourcefile, targetfile))
-    subprocess.check_call(cmd)
+    try:
+        subprocess.check_call(cmd)
+    except subprocess.CalledProcessError as e:
+        print("Error with gpsbabel: {}, ignoring...".format(e))
+        return False
+    else:
+        return True
 
 
 ##############################################

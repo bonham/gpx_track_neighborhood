@@ -2,6 +2,10 @@
 --- by inserting points into segments and renumber the segment id
 
 --- new table for points
+drop index if exists newpoints_seg_idx;
+drop index if exists newpoints_tr_idx;
+drop index if exists newpoints_geom_idx;
+
 drop table if exists public.newpoints;
 create table public.newpoints
 (
@@ -12,7 +16,8 @@ create table public.newpoints
     wkb_geometry geometry(Point,4326) not null,
     constraint newpoints_pk primary key (ogc_fid )
 );
-create index on newpoints(segment_id);
+create index newpoints_seg_idx on newpoints(segment_id);
+create index newpoints_tr_idx on newpoints(track_fid);
 CREATE INDEX newpoints_geom_idx
     ON newpoints USING gist(wkb_geometry);
 

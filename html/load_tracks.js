@@ -108,4 +108,5 @@ function hidePopups(event) {
   console.log(event);
 };
 map.addEventListener('click', hidePopups);
-$(window).click(hidePopups);
+$("div.container").css('cursor','pointer');
+$(document).on('click',hidePopups);

@@ -1,6 +1,5 @@
 /* Eslint directives following: */
 /* global document */
-/* global window */
 var jquery = require('jquery');
 var $ = jquery;
 import 'ol/ol.css';
@@ -14,6 +13,10 @@ import GeoJSON from 'ol/format/GeoJSON';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import {fromLonLat} from 'ol/proj';
+
+const numTracks = 5;
+const startYear = '2018';
+var colors = ['orange', 'brown', 'red', 'green', 'blue'];
 
 $(document).ready(function()	{
   $.getJSON('geojson/legend.json', function(data) {
@@ -30,60 +33,74 @@ $(document).ready(function()	{
       var identifier = '#c' + i;
       $(identifier).text(text);
     };
-
   });
-});
 
-var colors = ['orange', 'brown', 'red', 'green', 'blue'];
-var style = [];
-var vectorSource = [];
-var vectorLayer = [];
-var drawLayers = [ new Tile({ source: new OSM() }) ];
+  var style = loadStyles(colors);
+  var drawLayers = [ new Tile({ source: new OSM() }) ];
+  var vectorSources = loadSource(startYear, numTracks);
+  var vectorLayers = createLayers(vectorSources, style, numTracks);
 
-for (var i = 0; i < colors.length; i++) {
-
-  // define styles
-  style[i] = new Style({
-
-    stroke: new Stroke({
-      color: colors[i],
-      width: 2,
-    }),
+  for (var i = 0; i < vectorLayers.length; i++) {
+    drawLayers.push(vectorLayers[i]);
   }
-  );
 
-  // Load geojson
-  var fname = 'geojson/g_' + i + '.json';
-  vectorSource[i] = new VectorSource({
-    format: new GeoJSON(),
-    url: fname,
-  });
-
-  vectorLayer[i] = new VectorLayer({
-    source: vectorSource[i],
-    style: style[i],
-  });
-
-  drawLayers.push(vectorLayer[i]);
-}
-
-
-var map = new Map({
-  layers: drawLayers,
-  target: 'map',
-  /*
-    controls: ol.control.defaults({
-        attributionOptions: {
-            collapsible: false
-        }
+  var map = new Map({
+    layers: drawLayers,
+    target: 'map',
+    view: new View({
+      center: fromLonLat([8.697, 49.30]),
+      zoom: 12,
     }),
-    */
-  view: new View({
-    center: fromLonLat([8.697, 49.30]),
-    zoom: 12,
-  }),
-
+  });
+  map.addEventListener('click', hidePopups);
 });
+
+function loadStyles(colors) {
+
+  var style = [];
+  for (var i = 0; i < colors.length; i++) {
+
+    // define styles
+
+    style[i] = new Style({
+      stroke: new Stroke({
+        color: colors[i],
+        width: 2,
+      }),
+    });
+  }
+  return style;
+};
+
+function loadSource(year, num) {
+
+  var vectorSource = [];
+  for (var i = 0; i < num; i++) {
+
+    // Load geojson
+    var fname = 'geojson/' + year + '/' + 'g_' + i + '.json';
+    vectorSource[i] = new VectorSource({
+      format: new GeoJSON(),
+      url: fname,
+    });
+
+  };
+  return vectorSource;
+};
+
+function createLayers(vectorSource, style, num) {
+
+  var vectorLayer = [];
+  for (var i = 0; i < num; i++) {
+    vectorLayer[i] = new VectorLayer({
+      source: vectorSource[i],
+      style: style[i],
+    });
+  }
+  return vectorLayer;
+};
+
+
 /* use this code if you want to autozoom to a layer
     vl0.getSource().on('change', function(evt) {
         extent = vl0.getSource().getExtent();
@@ -107,6 +124,5 @@ function hidePopups(event) {
   $('#child_2').hide();
   console.log(event);
 };
-map.addEventListener('click', hidePopups);
-$("div.container").css('cursor','pointer');
-$(document).on('click',hidePopups);
+$('div.container').css('cursor', 'pointer');
+$(document).on('click', hidePopups);

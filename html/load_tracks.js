@@ -9,6 +9,7 @@ import Stroke from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 import VectorSource from 'ol/source/Vector';
 import VectorLayer from 'ol/layer/Vector';
+import LayerGroup from 'ol/layer/Group';
 import GeoJSON from 'ol/format/GeoJSON';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -17,6 +18,9 @@ import {fromLonLat} from 'ol/proj';
 const numTracks = 5;
 const startYear = '2018';
 var colors = ['orange', 'brown', 'red', 'green', 'blue'];
+var style = loadStyles(colors);
+var map;
+var currentLayer;
 
 $(document).ready(function()	{
   $.getJSON('geojson/legend.json', function(data) {
@@ -35,16 +39,12 @@ $(document).ready(function()	{
     };
   });
 
-  var style = loadStyles(colors);
   var drawLayers = [ new Tile({ source: new OSM() }) ];
-  var vectorSources = loadSource(startYear, numTracks);
-  var vectorLayers = createLayers(vectorSources, style, numTracks);
+  currentLayer = provideLayers(startYear, numTracks);
 
-  for (var i = 0; i < vectorLayers.length; i++) {
-    drawLayers.push(vectorLayers[i]);
-  }
+  drawLayers.push(currentLayer);
 
-  var map = new Map({
+  map = new Map({
     layers: drawLayers,
     target: 'map',
     view: new View({
@@ -88,17 +88,26 @@ function loadSource(year, num) {
   return vectorSource;
 };
 
-function createLayers(vectorSource, style, num) {
+function createLayers(vectorSource, num) {
 
-  var vectorLayer = [];
+  var vectorLayerList = [];
   for (var i = 0; i < num; i++) {
-    vectorLayer[i] = new VectorLayer({
+    vectorLayerList[i] = new VectorLayer({
       source: vectorSource[i],
       style: style[i],
     });
   }
-  return vectorLayer;
+  var lgroup = new LayerGroup(
+    {
+      layers: vectorLayerList,
+    });
+  return lgroup;
 };
+
+function provideLayers(year) {
+  var vSrc = loadSource(year, numTracks);
+  return createLayers(vSrc, numTracks);
+}
 
 
 /* use this code if you want to autozoom to a layer
@@ -118,11 +127,34 @@ $('#but_solution').click(function(event) {
   $('#child_1').hide();
   event.stopPropagation();
 });
+$('#but_2015').click(function(event) {
+  map.removeLayer(currentLayer);
+  currentLayer = provideLayers('2015', numTracks);
+  map.addLayer(currentLayer);
+  event.stopPropagation();
+});
+$('#but_2016').click(function(event) {
+  map.removeLayer(currentLayer);
+  currentLayer = provideLayers('2016', numTracks);
+  map.addLayer(currentLayer);
+  event.stopPropagation();
+});
+$('#but_2017').click(function(event) {
+  map.removeLayer(currentLayer);
+  currentLayer = provideLayers('2017', numTracks);
+  map.addLayer(currentLayer);
+  event.stopPropagation();
+});
+$('#but_2018').click(function(event) {
+  map.removeLayer(currentLayer);
+  currentLayer = provideLayers('2018', numTracks);
+  map.addLayer(currentLayer);
+  event.stopPropagation();
+});
 
 function hidePopups(event) {
   $('#child_1').hide();
   $('#child_2').hide();
-  console.log(event);
 };
 $('div.container').css('cursor', 'pointer');
 $(document).on('click', hidePopups);

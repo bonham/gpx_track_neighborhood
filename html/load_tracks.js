@@ -17,13 +17,33 @@ import {fromLonLat} from 'ol/proj';
 
 const numTracks = 5;
 const startYear = '2018';
+const years = ['2018', '2017', '2016', '2015']; // TODO: needs to be dynamic
 var colors = ['orange', 'brown', 'red', 'green', 'blue'];
 var style = loadStyles(colors);
 var map;
-var currentLayer;
+var currentLayer = null;
 
-$(document).ready(function()	{
-  $.getJSON('geojson/legend.json', function(data) {
+$(document).ready(function() {
+
+  var drawLayers = [ new Tile({ source: new OSM() }) ];
+
+  map = new Map({
+    layers: drawLayers,
+    target: 'map',
+    view: new View({
+      center: fromLonLat([8.697, 49.30]),
+      zoom: 12,
+    }),
+  });
+  map.addEventListener('click', hidePopups);
+
+  switchMap(startYear);
+  setActiveButton($('#but_' + startYear));
+
+});
+
+function loadLegend(year) {
+  $.getJSON('geojson/' + year + '/legend.json', function(data) {
     for (var i = 0; i < data.length; i++) {
 
       var min = data[i]['min'];
@@ -39,22 +59,7 @@ $(document).ready(function()	{
     };
   });
 
-  var drawLayers = [ new Tile({ source: new OSM() }) ];
-  currentLayer = provideLayers(startYear, numTracks);
-
-  drawLayers.push(currentLayer);
-
-  map = new Map({
-    layers: drawLayers,
-    target: 'map',
-    view: new View({
-      center: fromLonLat([8.697, 49.30]),
-      zoom: 12,
-    }),
-  });
-  map.addEventListener('click', hidePopups);
-});
-
+}
 function loadStyles(colors) {
 
   var style = [];
@@ -117,9 +122,6 @@ function provideLayers(year) {
     });
     */
 
-$('#but_' + startYear).css('background-color','#8eb3a2');
-$('#but_' + startYear).css('border-color','#8eb3a2');
-
 $('#but_guide').click(function(event) {
   $('#child_1').toggle();
   $('#child_2').hide();
@@ -130,50 +132,38 @@ $('#but_solution').click(function(event) {
   $('#child_1').hide();
   event.stopPropagation();
 });
-$('#but_2015').click(function(event) {
+
+$.each(years, function(index, value){
+  prepareButton(value);
+});
+
+function switchMap(year) {
+  if (currentLayer != null) {
+    map.removeLayer(currentLayer);
+  }
+  currentLayer = provideLayers(year, numTracks);
+  map.addLayer(currentLayer);
+  loadLegend(year);
+};
+
+function prepareButton(year){
+  $('#but_' + year).click(function(event) {
+    switchMap(year);
+    setActiveButton($(this));
+    event.stopPropagation();
+  });
+};
+
+function setActiveButton(buttonObject){
   $('.button-mapselect').css('background-color', '#25283d');
   $('.button-mapselect').css('border-color', '#888');
-  $(this).css('background-color', '#8eb3a2');
-  $(this).css('border-color', '#8eb3a2');
-  map.removeLayer(currentLayer);
-  currentLayer = provideLayers('2015', numTracks);
-  map.addLayer(currentLayer);
-  event.stopPropagation();
-});
-$('#but_2016').click(function(event) {
-  $('.button-mapselect').css('background-color', '#25283d');
-  $('.button-mapselect').css('border-color', '#888');
-  $(this).css('background-color', '#8eb3a2');
-  $(this).css('border-color', '#8eb3a2');
-  map.removeLayer(currentLayer);
-  currentLayer = provideLayers('2016', numTracks);
-  map.addLayer(currentLayer);
-  event.stopPropagation();
-});
-$('#but_2017').click(function(event) {
-  $('.button-mapselect').css('background-color', '#25283d');
-  $('.button-mapselect').css('border-color', '#888');
-  $(this).css('background-color', '#8eb3a2');
-  $(this).css('border-color', '#8eb3a2');
-  map.removeLayer(currentLayer);
-  currentLayer = provideLayers('2017', numTracks);
-  map.addLayer(currentLayer);
-  event.stopPropagation();
-});
-$('#but_2018').click(function(event) {
-  $('.button-mapselect').css('background-color', '#25283d');
-  $('.button-mapselect').css('border-color', '#888');
-  $(this).css('background-color', '#8eb3a2');
-  $(this).css('border-color', '#8eb3a2');
-  map.removeLayer(currentLayer);
-  currentLayer = provideLayers('2018', numTracks);
-  map.addLayer(currentLayer);
-  event.stopPropagation();
-});
+  buttonObject.css('background-color', '#8eb3a2');
+  buttonObject.css('border-color', '#8eb3a2');
+}
 
 function hidePopups(event) {
   $('#child_1').hide();
   $('#child_2').hide();
 };
-$('div.container').css('cursor', 'pointer');
+$('div.container').css('cursor', 'pointer'); // make ios work
 $(document).on('click', hidePopups);

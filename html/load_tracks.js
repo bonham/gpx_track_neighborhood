@@ -117,6 +117,9 @@ function provideLayers(year) {
     });
     */
 
+$('#but_' + startYear).css('background-color','#8eb3a2');
+$('#but_' + startYear).css('border-color','#8eb3a2');
+
 $('#but_guide').click(function(event) {
   $('#child_1').toggle();
   $('#child_2').hide();
@@ -128,24 +131,40 @@ $('#but_solution').click(function(event) {
   event.stopPropagation();
 });
 $('#but_2015').click(function(event) {
+  $('.button-mapselect').css('background-color', '#25283d');
+  $('.button-mapselect').css('border-color', '#888');
+  $(this).css('background-color', '#8eb3a2');
+  $(this).css('border-color', '#8eb3a2');
   map.removeLayer(currentLayer);
   currentLayer = provideLayers('2015', numTracks);
   map.addLayer(currentLayer);
   event.stopPropagation();
 });
 $('#but_2016').click(function(event) {
+  $('.button-mapselect').css('background-color', '#25283d');
+  $('.button-mapselect').css('border-color', '#888');
+  $(this).css('background-color', '#8eb3a2');
+  $(this).css('border-color', '#8eb3a2');
   map.removeLayer(currentLayer);
   currentLayer = provideLayers('2016', numTracks);
   map.addLayer(currentLayer);
   event.stopPropagation();
 });
 $('#but_2017').click(function(event) {
+  $('.button-mapselect').css('background-color', '#25283d');
+  $('.button-mapselect').css('border-color', '#888');
+  $(this).css('background-color', '#8eb3a2');
+  $(this).css('border-color', '#8eb3a2');
   map.removeLayer(currentLayer);
   currentLayer = provideLayers('2017', numTracks);
   map.addLayer(currentLayer);
   event.stopPropagation();
 });
 $('#but_2018').click(function(event) {
+  $('.button-mapselect').css('background-color', '#25283d');
+  $('.button-mapselect').css('border-color', '#888');
+  $(this).css('background-color', '#8eb3a2');
+  $(this).css('border-color', '#8eb3a2');
   map.removeLayer(currentLayer);
   currentLayer = provideLayers('2018', numTracks);
   map.addLayer(currentLayer);

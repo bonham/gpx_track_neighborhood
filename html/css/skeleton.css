@@ -236,6 +236,13 @@ input[type="button"].button-primary:focus {
   background-color: #166A76;
   border-color: #166A76; }
 
+.button.button-mapselect {
+  color: #FFF;
+  background-color: #25283d;
+  border-color: #888;
+}
+
+
 
 /* Forms
 –––––––––––––––––––––––––––––––––––––––––––––––––– */

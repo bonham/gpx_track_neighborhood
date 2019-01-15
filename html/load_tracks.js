@@ -36,7 +36,9 @@ $(document).ready(function() {
     }),
   });
   map.addEventListener('click', hidePopups);
+  map.addEventListener('rendercomplete', hideSpinner);
 
+  showSpinner(null);
   switchMap(startYear);
   setActiveButton($('#but_' + startYear));
 
@@ -146,8 +148,17 @@ function switchMap(year) {
   loadLegend(year);
 };
 
+function showSpinner(event) {
+  $('#loaderback').css('display', 'inline-block');
+}
+
+function hideSpinner(event) {
+  $('#loaderback').css('display', 'none');
+}
+
 function prepareButton(year){
   $('#but_' + year).click(function(event) {
+    showSpinner(event);
     switchMap(year);
     setActiveButton($(this));
     event.stopPropagation();

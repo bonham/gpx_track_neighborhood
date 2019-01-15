@@ -548,7 +548,7 @@ div.article
   text-align: center;
 }
 #loaderback {
-  display: inline-block;
+  display: none;
   width: 15em;
   height: 15em;
   background-color: rgba(0,60,136,0.5); 

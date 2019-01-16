@@ -37,12 +37,62 @@ $(document).ready(function() {
   });
   map.addEventListener('click', hidePopups);
   map.addEventListener('rendercomplete', hideSpinner);
+  $('#map').append(createCustomControl());
 
   showSpinner(null);
   switchMap(startYear);
   setActiveButton($('#but_' + startYear));
 
+  // 'Guide' and 'About' buttons
+  $('#but_guide').click(function(event) {
+    $('#child_1').toggle();
+    $('#child_2').hide();
+    event.stopPropagation();
+  });
+  $('#but_solution').click(function(event) {
+    $('#child_2').toggle();
+    $('#child_1').hide();
+    event.stopPropagation();
+  });
+  $(document).on('click', hidePopups);
+
+  // Events for 'Year' buttons
+  $.each(years, function(index, value){
+    prepareButton(value);
+  });
+
+  // Ios event bubbling
+  $('div.container').css('cursor', 'pointer'); // make ios work
+
 });
+
+function createCustomControl(myMap) {
+
+  var loaderback =
+    $('<div></div>')
+      .attr('id', 'loaderback')
+//      .addClass('u-cf')
+      .addClass('loader');
+
+  var centerin =
+    $('<div></div>')
+      .attr('id', 'centerin')
+      .html(loaderback);
+
+  var centerout =
+    $('<div></div>')
+      .attr('id', 'centerout')
+//      .addClass('u-cf')
+      .html(centerin);
+
+  var child0 =
+    $('<div></div>')
+      .attr('id', 'child_0')
+//      .addClass('u-cf')
+      .html(centerout);
+
+  return child0;
+}
 
 function loadLegend(year) {
   $.getJSON('geojson/' + year + '/legend.json', function(data) {
@@ -116,29 +166,6 @@ function provideLayers(year) {
   return createLayers(vSrc, numTracks);
 }
 
-
-/* use this code if you want to autozoom to a layer
-    vl0.getSource().on('change', function(evt) {
-        extent = vl0.getSource().getExtent();
-        map.getView().fit(extent, map.getSize());
-    });
-    */
-
-$('#but_guide').click(function(event) {
-  $('#child_1').toggle();
-  $('#child_2').hide();
-  event.stopPropagation();
-});
-$('#but_solution').click(function(event) {
-  $('#child_2').toggle();
-  $('#child_1').hide();
-  event.stopPropagation();
-});
-
-$.each(years, function(index, value){
-  prepareButton(value);
-});
-
 function switchMap(year) {
   if (currentLayer != null) {
     map.removeLayer(currentLayer);
@@ -176,5 +203,3 @@ function hidePopups(event) {
   $('#child_1').hide();
   $('#child_2').hide();
 };
-$('div.container').css('cursor', 'pointer'); // make ios work
-$(document).on('click', hidePopups);

@@ -14,6 +14,7 @@ import GeoJSON from 'ol/format/GeoJSON';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import {fromLonLat} from 'ol/proj';
+import Control from 'ol/control/Control';
 
 const numTracks = 5;
 const startYear = '2018';
@@ -36,10 +37,16 @@ $(document).ready(function() {
     }),
   });
   map.addEventListener('click', hidePopups);
-  map.addEventListener('rendercomplete', hideSpinner);
-  $('#map').append(createCustomControl());
+  map.addEventListener('rendercomplete', hideLoading);
 
-  showSpinner(null);
+  var olc = document.getElementsByClassName('ol-overlaycontainer')[0];
+  var loaderControl = new Control({
+    element: createLoaderControl(),
+    target: olc,
+  });
+  map.addControl(loaderControl);
+
+  showLoading(null);
   switchMap(startYear);
   setActiveButton($('#but_' + startYear));
 
@@ -66,32 +73,17 @@ $(document).ready(function() {
 
 });
 
-function createCustomControl(myMap) {
+function createLoaderControl() {
 
-  var loaderback =
-    $('<div></div>')
-      .attr('id', 'loaderback')
-//      .addClass('u-cf')
-      .addClass('loader');
+  var outerLoadingEl = document.createElement("div");
+  outerLoadingEl.classList.add('loading-outer');
+  var innerLoadingEl = document.createElement("div");
+  innerLoadingEl.classList.add('loading-inner');
+  var loadingText = document.createTextNode("Loading ..."); 
+  innerLoadingEl.appendChild(loadingText);
+  outerLoadingEl.appendChild(innerLoadingEl);
+  return outerLoadingEl;
 
-  var centerin =
-    $('<div></div>')
-      .attr('id', 'centerin')
-      .html(loaderback);
-
-  var centerout =
-    $('<div></div>')
-      .attr('id', 'centerout')
-//      .addClass('u-cf')
-      .html(centerin);
-
-  var child0 =
-    $('<div></div>')
-      .attr('id', 'child_0')
-//      .addClass('u-cf')
-      .html(centerout);
-
-  return child0;
 }
 
 function loadLegend(year) {
@@ -175,17 +167,17 @@ function switchMap(year) {
   loadLegend(year);
 };
 
-function showSpinner(event) {
-  $('#loaderback').css('display', 'inline-block');
+function showLoading(event) {
+  $('.loading-outer').css('display', 'block');
 }
 
-function hideSpinner(event) {
-  $('#loaderback').css('display', 'none');
+function hideLoading(event) {
+  $('.loading-outer').css('display', 'none');
 }
 
 function prepareButton(year){
   $('#but_' + year).click(function(event) {
-    showSpinner(event);
+    showLoading(event);
     switchMap(year);
     setActiveButton($(this));
     event.stopPropagation();

@@ -75,11 +75,11 @@ $(document).ready(function() {
 
 function createLoaderControl() {
 
-  var outerLoadingEl = document.createElement("div");
+  var outerLoadingEl = document.createElement('div');
   outerLoadingEl.classList.add('loading-outer');
-  var innerLoadingEl = document.createElement("div");
+  var innerLoadingEl = document.createElement('div');
   innerLoadingEl.classList.add('loading-inner');
-  var loadingText = document.createTextNode("Loading ..."); 
+  var loadingText = document.createTextNode('Loading ...');
   innerLoadingEl.appendChild(loadingText);
   outerLoadingEl.appendChild(innerLoadingEl);
   return outerLoadingEl;

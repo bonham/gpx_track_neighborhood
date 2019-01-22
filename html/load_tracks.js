@@ -18,7 +18,6 @@ import Control from 'ol/control/Control';
 
 const numTracks = 5;
 const startYear = '2018';
-const years = ['2018', '2017', '2016', '2015']; // TODO: needs to be dynamic
 var colors = ['orange', 'brown', 'red', 'green', 'blue'];
 var style = loadStyles(colors);
 var map;
@@ -63,9 +62,11 @@ $(document).ready(function() {
   });
   $(document).on('click', hidePopups);
 
-  // Events for 'Year' buttons
-  $.each(years, function(index, value){
-    prepareButton(value);
+  // prepare buttons for each subdir(label)
+  $.getJSON('geojson/datasets.json', function(data) {
+    $.each(data, function(index, value){
+      prepareButton(value);
+    });
   });
 
   // Ios event bubbling
@@ -86,8 +87,8 @@ function createLoaderControl() {
 
 }
 
-function loadLegend(year) {
-  $.getJSON('geojson/' + year + '/legend.json', function(data) {
+function loadLegend(subdir) {
+  $.getJSON('geojson/' + subdir + '/legend.json', function(data) {
     for (var i = 0; i < data.length; i++) {
 
       var min = data[i]['min'];
@@ -175,10 +176,13 @@ function hideLoading(event) {
   $('.loading-outer').css('display', 'none');
 }
 
-function prepareButton(year){
-  $('#but_' + year).click(function(event) {
+function prepareButton(label){
+  $('<li><a id="but_'+label+'" class="button button-mapselect" href="#">'+label+'</a></li>').insertBefore(
+    '#but_guide'
+  );
+  $('#but_' + label).click(function(event) {
     showLoading(event);
-    switchMap(year);
+    switchMap(label);
     setActiveButton($(this));
     event.stopPropagation();
   });

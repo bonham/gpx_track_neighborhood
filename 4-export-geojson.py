@@ -16,14 +16,18 @@ PG_USER="postgres"
 def main():
 
     # parse args
-    database_name = a_parse()
+    (database_name, outputDir) = a_parse()
 
     # connect to db
     conn = psycopg2.connect(
                 "dbname={} user={}".format(database_name, PG_USER))
     cur = conn.cursor()
 
-    geodir = os.path.normpath("html/static/geojson")
+    geodir = os.path.normpath(
+            os.path.join(
+                "html/static/geojson",
+                outputDir)
+            )
     oldfiles = glob.glob(os.path.join(geodir,'*'))
     for remove_file in oldfiles:
         print("Deleting {}".format(remove_file))
@@ -49,6 +53,7 @@ def main():
         
         fname = os.path.join(geodir, "g_{}.json".format(i))
         print("Writing "+fname)
+        os.makedirs(geodir, exist_ok=True)
         with open(fname,"w") as f:
             f.write(js)
 
@@ -70,13 +75,13 @@ def main():
 def a_parse():
     parser = argparse.ArgumentParser(
             description = 
-                'dump geojson'
+                'Write gpx tracks as geojson to disk. The output directory will be "html/static/geojson/<dataset_label>/'
             )
     parser.add_argument('database')
+    parser.add_argument('dataset_label', help="This should be a unique label of your gpx set. E.g '2019'")
     args = parser.parse_args()
 
-    database_name = args.database
-    return database_name
+    return (args.database, args.dataset_label)
 
 
 

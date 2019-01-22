@@ -16,7 +16,7 @@ Run all python commands below. Use --help to learn what arguments to provide
 * Run <strong>1-gpx2postgis.py</strong> <source_dir> <target_dbname> to import gpx tracks to database. The database will be created or overwritten.
 * Run <strong>2-proximity-calc.py</strong> to calculate intersections of gpx tracks.
 * Run <strong>3-category-calc.py</strong> to calculate color categories.
-* Run <strong>4-export-geojson.py</strong> to create json files for html pages.
+* Run <strong>4-export-geojson.py</strong> <database> <dataset_label> to create json files for html pages. Your geojson dataset will be in subdir html/static/geojson/<dataset_label>
 * cd to subdirectory `html` and run `npm run build`. See [details here](html/README.md)
 
 The finished web pages are in subdirectory <strong>html/dist</strong>. Push all files from that folder to a webserver and open it in browser. ( Firefox can open it also locally, but not Chrome. For Chrome you can start local webserver from html directory with <strong>startserver.bat</strong>)

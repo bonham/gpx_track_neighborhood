@@ -19,7 +19,7 @@ Run all python commands below. Use --help to learn what arguments to provide
 * Run <strong>4-export-geojson.py</strong> \<database> \<dataset_label> to create json files for html pages. Your geojson dataset will be in subdir html/static/geojson/<dataset_label>
 * cd to subdirectory `html` and run `npm run build`. See [details here](html/README.md)
 
-The finished web pages are in subdirectory <strong>html/dist</strong>. Push all files from that folder to a webserver and open it in browser. ( Firefox can open it also locally, but not Chrome. For Chrome you can start local webserver from html directory with <strong>startserver.bat</strong>)
+The finished web pages are in subdirectory <strong>html/dist</strong>. Push all files from that folder to a webserver and open it in browser. To view the files locally, use npm start. This will start the parcel server.
 
 ## Platforms
 

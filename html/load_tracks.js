@@ -16,7 +16,7 @@ import View from 'ol/View';
 import {fromLonLat} from 'ol/proj';
 import Control from 'ol/control/Control';
 
-const numTracks = 5;
+const numTracks = 5; //TODO: needs to be dynamic
 const startYear = '2018';
 var colors = ['orange', 'brown', 'red', 'green', 'blue'];
 var style = loadStyles(colors);
@@ -45,10 +45,6 @@ $(document).ready(function() {
   });
   map.addControl(loaderControl);
 
-  showLoading(null);
-  switchMap(startYear);
-  setActiveButton($('#but_' + startYear));
-
   // 'Guide' and 'About' buttons
   $('#but_guide').click(function(event) {
     $('#child_1').toggle();
@@ -67,6 +63,12 @@ $(document).ready(function() {
     $.each(data, function(index, value){
       prepareButton(value);
     });
+
+    var startLabel = data[0];
+    showLoading(null);
+    switchMap(startLabel);
+    setActiveButton($('#but_' + startLabel));
+
   });
 
   // Ios event bubbling

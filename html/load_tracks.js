@@ -16,7 +16,6 @@ import View from 'ol/View';
 import {fromLonLat} from 'ol/proj';
 import Control from 'ol/control/Control';
 
-const numTracks = 5; //TODO: needs to be dynamic
 const startYear = '2018';
 var colors = ['orange', 'brown', 'red', 'green', 'blue'];
 var style = loadStyles(colors);
@@ -59,7 +58,8 @@ $(document).ready(function() {
   $(document).on('click', hidePopups);
 
   // prepare buttons for each subdir(label)
-  $.getJSON('geojson/datasets.json', function(data) {
+  var fpath = 'geojson/datasets.json';
+  $.getJSON(fpath, function(data) {
     $.each(data, function(index, value){
       prepareButton(value);
     });
@@ -69,6 +69,9 @@ $(document).ready(function() {
     switchMap(startLabel);
     setActiveButton($('#but_' + startLabel));
 
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    console.log("Failed to load "+fpath);   
+    console.log(errorThrown);   
   });
 
   // Ios event bubbling
@@ -90,7 +93,8 @@ function createLoaderControl() {
 }
 
 function loadLegend(subdir) {
-  $.getJSON('geojson/' + subdir + '/legend.json', function(data) {
+  var fpath = 'geojson/' + subdir + '/legend.json';
+  $.getJSON(fpath, function(data) {
     for (var i = 0; i < data.length; i++) {
 
       var min = data[i]['min'];
@@ -104,6 +108,9 @@ function loadLegend(subdir) {
       var identifier = '#c' + i;
       $(identifier).text(text);
     };
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    console.log("Failed to load "+fpath);   
+    console.log(errorThrown);   
   });
 
 }
@@ -156,7 +163,7 @@ function createLayers(vectorSource, num) {
   return lgroup;
 };
 
-function provideLayers(year) {
+function provideLayers(year, numTracks) {
   var vSrc = loadSource(year, numTracks);
   return createLayers(vSrc, numTracks);
 }
@@ -165,9 +172,20 @@ function switchMap(year) {
   if (currentLayer != null) {
     map.removeLayer(currentLayer);
   }
-  currentLayer = provideLayers(year, numTracks);
-  map.addLayer(currentLayer);
+
   loadLegend(year);
+
+  var fpath = 'geojson/'+year+'/numberOfTracks.json';
+  var jqXHR = $.getJSON(fpath, function(data) {
+  
+    var numTracks = data['numberOfTrackFiles'];
+    currentLayer = provideLayers(year, numTracks);
+    map.addLayer(currentLayer);
+
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    console.log("Failed to load "+fpath);   
+    console.log(errorThrown);   
+  });
 };
 
 function showLoading(event) {

@@ -62,6 +62,15 @@ def main():
 
         i += 1;
 
+    # write file about how many tracks we have
+    numTrackFilePath = os.path.join(geodir, "numberOfTracks.json")
+    print("Writing {}".format(numTrackFilePath))
+    with open(numTrackFilePath, "w") as fp:
+       json.dump(
+               {"numberOfTrackFiles": len(r)},
+               fp
+               )
+    
     # dump file for legend
     fname = os.path.join(geodir, "legend.json")
     print("Writing {}".format(fname))
@@ -102,10 +111,10 @@ def create_extend_metadata(directory, filename, label):
         mdata = []
 
 
-    # append label if not in list
+    # Insert label at beginning of list if not in list
     if label not in mdata:
-        print("Appending {} to {}".format(label, fpath))
-        mdata.append(label)
+        print("Adding {} to {}".format(label, fpath))
+        mdata.insert(0, label)
     else:
         print("Label {} is already in {}".format(label, fpath))
 

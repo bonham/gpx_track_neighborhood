@@ -16,7 +16,6 @@ import View from 'ol/View';
 import {fromLonLat} from 'ol/proj';
 import Control from 'ol/control/Control';
 
-const startYear = '2018';
 var colors = ['orange', 'brown', 'red', 'green', 'blue'];
 var style = loadStyles(colors);
 var map;
@@ -70,8 +69,8 @@ $(document).ready(function() {
     setActiveButton($('#but_' + startLabel));
 
   }).fail(function(jqXHR, textStatus, errorThrown) {
-    console.log("Failed to load "+fpath);   
-    console.log(errorThrown);   
+    console.log('Failed to load ' + fpath);
+    console.log(errorThrown);
   });
 
   // Ios event bubbling
@@ -109,8 +108,8 @@ function loadLegend(subdir) {
       $(identifier).text(text);
     };
   }).fail(function(jqXHR, textStatus, errorThrown) {
-    console.log("Failed to load "+fpath);   
-    console.log(errorThrown);   
+    console.log('Failed to load ' + fpath);
+    console.log(errorThrown);
   });
 
 }
@@ -175,16 +174,16 @@ function switchMap(year) {
 
   loadLegend(year);
 
-  var fpath = 'geojson/'+year+'/numberOfTracks.json';
+  var fpath = 'geojson/' + year + '/numberOfTracks.json';
   var jqXHR = $.getJSON(fpath, function(data) {
-  
+
     var numTracks = data['numberOfTrackFiles'];
     currentLayer = provideLayers(year, numTracks);
     map.addLayer(currentLayer);
 
   }).fail(function(jqXHR, textStatus, errorThrown) {
-    console.log("Failed to load "+fpath);   
-    console.log(errorThrown);   
+    console.log('Failed to load ' + fpath);
+    console.log(errorThrown);
   });
 };
 
@@ -197,8 +196,14 @@ function hideLoading(event) {
 }
 
 function prepareButton(label){
-  $('<li><a id="but_'+label+'" class="button button-mapselect" href="#">'+label+'</a></li>').insertBefore(
-    '#but_guide'
+  var buttonHtml =
+    '<li><a id="but_' +
+    label +
+    '" class="button button-mapselect" href="#">' +
+    label +
+    '</a></li>';
+  $(buttonHtml).insertBefore(
+    '#but_guide_listelement'
   );
   $('#but_' + label).click(function(event) {
     showLoading(event);

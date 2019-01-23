@@ -152,7 +152,7 @@ function createLayers(vectorSource, num) {
   for (var i = 0; i < num; i++) {
     vectorLayerList[i] = new VectorLayer({
       source: vectorSource[i],
-      style: style[i],
+      style: style[i % style.length],
     });
   }
   var lgroup = new LayerGroup(

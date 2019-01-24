@@ -16,11 +16,12 @@ if sys.version_info < (3,6):
 PG_USER="postgres"
 METADATA_FNAME="datasets.json"
 BASEDIR=os.path.normpath("html/static/geojson")
+MAXCATEGORIES = 5
 
 def main():
 
     # parse args
-    (database_name, outputDir) = a_parse()
+    (database_name, outputDir, mode) = a_parse()
 
     # connect to db
     conn = psycopg2.connect(
@@ -29,57 +30,30 @@ def main():
 
     geodir = os.path.join(BASEDIR, outputDir)
 
-    # remove directory if exists
-    print("Removing {}".format(geodir))
-    if os.path.exists(geodir) and os.path.isdir(geodir):
-        shutil.rmtree(geodir)
-    
-    # recreate directory ( including parents )
-    os.makedirs(geodir, exist_ok=True)
-
-    # create or extend metadata file
+    cleanup(geodir)
     create_extend_metadata(BASEDIR, METADATA_FNAME, outputDir)
 
-    # read geojson
-    cur.execute("select category, ST_AsGeoJSON(ST_Collect(wkb_geometry)), min(freq), max(freq) from track_segment_freq_categories group by category order by category")
-    r = cur.fetchall()
+    if mode == "category":
 
-    # Attention: with low numbers, categories can have gaps. E.g. we could have category 0 2 3 4, but not 1
+        ( geometryList, categoryList ) = queryCategoryMode(cur)
 
-    cat_frequencies = []
+    elif mode == 'plain':
 
-    i = 0
-    for row in r:
-        (realcat, js, minfreq, maxfreq) = row
+        ( geometryList, categoryList ) = queryPlainMode(cur, MAXCATEGORIES)
 
-        # category will be renumbered to i
-        cat_frequencies.append( { "category": i, "min": minfreq, "max": maxfreq } )
-        
-        fname = os.path.join(geodir, "g_{}.json".format(i))
-        print("Writing "+fname)
-        with open(fname,"w") as f:
-            f.write(js)
 
-        i += 1;
-
-    # write file about how many tracks we have
-    numTrackFilePath = os.path.join(geodir, "numberOfTracks.json")
-    print("Writing {}".format(numTrackFilePath))
-    with open(numTrackFilePath, "w") as fp:
-       json.dump(
-               {"numberOfTrackFiles": len(r)},
-               fp
-               )
-    
-    # dump file for legend
-    fname = os.path.join(geodir, "legend.json")
-    print("Writing {}".format(fname))
-    legendfile = open(fname, "w")
-    json.dump(cat_frequencies, legendfile)
+    legendFilePath = os.path.join(geodir, "legend.json")
+    writeLegendFile(legendFilePath, categoryList)
 
     # print categories 
-    for item in cat_frequencies:
+    for item in categoryList:
         print("Category {}: {:3} - {:3}".format(item["category"], item["min"], item["max"]))
+
+    writeGeoJsonFiles(geometryList, geodir)
+
+    numTrackFilePath = os.path.join(geodir, "numberOfTracks.json")
+    writeNumTracksFile(numTrackFilePath, len(geometryList))
+
 
 
 
@@ -91,10 +65,27 @@ def a_parse():
             )
     parser.add_argument('database')
     parser.add_argument('dataset_label', help="This should be a unique label of your gpx set. E.g '2019'")
+    parser.add_argument(
+            '-m',
+            default="category",
+            type=str,
+            choices=('category','plain'),
+            help="Extraction mode. Possible values: category|plain. If you omit the flag, the default is category")
     args = parser.parse_args()
 
-    return (args.database, args.dataset_label)
+    print("Mode is {}".format(args.m))
+    return (args.database, args.dataset_label, args.m)
 
+
+def cleanup(geodir):
+
+    # remove directory if exists
+    print("Removing {}".format(geodir))
+    if os.path.exists(geodir) and os.path.isdir(geodir):
+        shutil.rmtree(geodir)
+    
+    # recreate directory ( including parents )
+    os.makedirs(geodir, exist_ok=True)
 
 def create_extend_metadata(directory, filename, label):
 
@@ -122,6 +113,77 @@ def create_extend_metadata(directory, filename, label):
     print("Writing {}".format(fpath))
     with open(fpath, 'w') as fp:
         json.dump(mdata, fp)
+
+
+def queryCategoryMode(cur):
+
+    # read geojson
+    cur.execute("select category, ST_AsGeoJSON(ST_Collect(wkb_geometry)), min(freq), max(freq) from track_segment_freq_categories group by category order by category")
+    r = cur.fetchall()
+
+    geometryList = []
+    categoryList = []
+
+    i = 0
+    for row in r:
+        (realcat, js, minfreq, maxfreq) = row
+        geometryList.append(js)
+        categoryList.append( { "category": i, "min": minfreq, "max": maxfreq } )
+        i += 1
+
+    return (geometryList, categoryList)
+
+
+def queryPlainMode(cur, maxCategories):
+
+    # read geojson
+    cur.execute("select track_id, ST_AsGeoJSON(wkb_geometry) from all_tracks order by track_id")
+    r = cur.fetchall()
+
+    geometryList = []
+    categoryList = []
+
+    i = 1
+    for row in r:
+        (track_id, js) = row
+        geometryList.append(js)
+
+        if i <= maxCategories:
+            categoryList.append( { "category": i, "min": track_id, "max": track_id } )
+        i += 1
+
+    return (geometryList, categoryList)
+
+
+def writeGeoJsonFiles(geomList, geodir):
+
+    i = 0
+    for js in geomList:
+
+        fname = os.path.join(geodir, "g_{}.json".format(i))
+        print("Writing "+fname)
+        with open(fname,"w") as f:
+            f.write(js)
+
+        i += 1;
+
+def writeNumTracksFile(fpath, num):
+
+    # write file about how many tracks we have
+    print("Writing {}".format(fpath))
+    with open(fpath, "w") as fp:
+       json.dump(
+               {"numberOfTrackFiles": num},
+               fp
+               )
+    
+def writeLegendFile(fpath, cat_frequencies):
+
+    # dump file for legend
+    print("Writing {}".format(fpath))
+    with open(fpath, "w") as legendfile:
+        json.dump(cat_frequencies, legendfile)
+
 
 
 ###################################################

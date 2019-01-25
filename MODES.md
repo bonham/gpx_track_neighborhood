@@ -8,3 +8,5 @@ There are two modes how you can display the tracks on the map
 Usage: `usage: 4-export-geojson.py [-h] [-m {category,plain}] database dataset_label`
 
 The mode is controlled by the `-m` flag. If you omit the flag then *category mode* is the default.
+
+Note: If you only want to export in plain mode, then you can skip the python scripts *2-proximity-calc.py* and *3-category-calc.py* 

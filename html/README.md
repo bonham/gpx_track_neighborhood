@@ -14,7 +14,7 @@ We are using *parcel* to bundle html, javascript, css. It is generating the smal
 2. Run `npm install`
 3. Run `npm run pretest` to run linter
 4. Run `npm start` to start development server on port 1234
-5. Run `npm run build` to produce packed html / js / css files in `dist` subdirectory
+5. Run `npm run build` to produce packed html / js / css / static js files in `dist` subdirectory
 6. Copy contents of `dist` folder to production http server
 
 ##

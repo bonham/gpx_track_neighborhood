@@ -20,6 +20,7 @@ var colors = ['orange', 'brown', 'red', 'green', 'blue'];
 var style = loadStyles(colors);
 var map;
 var currentLayer = null;
+const DEFAULT_ZOOM = 9;
 
 $(document).ready(function() {
 
@@ -30,7 +31,7 @@ $(document).ready(function() {
     target: 'map',
     view: new View({
       center: fromLonLat([8.697, 49.30]),
-      zoom: 12,
+      zoom: DEFAULT_ZOOM,
     }),
   });
   map.addEventListener('click', hidePopups);

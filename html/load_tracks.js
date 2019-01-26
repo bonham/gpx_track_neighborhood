@@ -64,7 +64,6 @@ $(document).ready(function() {
     });
 
     var startLabel = data[0];
-    showLoading(null);
     switchMap(startLabel);
     setActiveButton($('#but_' + startLabel));
 
@@ -177,6 +176,7 @@ function switchMap(year) {
   var fpath = 'geojson/' + year + '/numberOfTracks.json';
   var jqXHR = $.getJSON(fpath, function(data) {
 
+    showLoading();
     var numTracks = data['numberOfTrackFiles'];
     currentLayer = provideLayers(year, numTracks);
     map.addLayer(currentLayer);
@@ -187,7 +187,7 @@ function switchMap(year) {
   });
 };
 
-function showLoading(event) {
+function showLoading() {
   $('.loading-outer').css('display', 'block');
 }
 
@@ -206,7 +206,6 @@ function prepareButton(label){
     '#but_guide_listelement'
   );
   $('#but_' + label).click(function(event) {
-    showLoading(event);
     switchMap(label);
     setActiveButton($(this));
     event.stopPropagation();

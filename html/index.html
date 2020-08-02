@@ -1,121 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
-  <!-- Basic Page Needs -->
-  <meta charset="utf-8">
-  <title>GPX Tracks of Elch</title>
-  <meta name="GPX Track Proximator" content="">
-  <meta name="Elch" content="">
+	<!-- Basic Page Needs -->
+	<meta charset="utf-8">
+	<title>GPX Tracks of Elch</title>
+	<meta name="GPX Track Proximator" content="">
+	<meta name="Elch" content="">
 
-  <!-- Mobile Specific Metas -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+	<!-- Mobile Specific Metas -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- FONT -->
-  <link href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet" type="text/css">
+	<!-- FONT -->
+	<link
+		href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic"
+		rel="stylesheet" type="text/css">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/normalize.css">
-  <link rel="stylesheet" href="css/skeleton.css">
-  
+	<!-- CSS -->
+	<link rel="stylesheet" href="css/normalize.css">
+	<link rel="stylesheet" href="css/skeleton.css">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="images/favicon.png">
 
-  <!-- Javascript -->
-  <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+	<!-- Favicon -->
+	<link rel="icon" type="image/png" href="images/favicon.png">
+
+	<!-- Javascript -->
+	<script
+		src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
 
 </head>
+
 <body>
 
-  <!-- Primary Page Layout -->
+	<!-- Primary Page Layout -->
 
-  <div class="container">
-      <div class="row" id="headerrow">
-		  <div id="header" class="twelve columns">
-			<nav>
+	<div class="container">
+		<div class="row" id="headerrow">
+			<div id="header" class="twelve columns">
+				<nav>
 
-				<ul>
-					<li id="but_guide_listelement"><a 
-                        id="but_guide"
-						class="button button-primary"
-						href="#">Guide</a></li>
-					<li><a 
-                        id="but_solution"
-						class="button button-primary"
-						href="#">About</a></li>
-				</ul>
-			</nav>
-		  </div>
-	  </div>
-      <div id="maprow" class="row">
-		  <div id="map" class="twelve columns"/>
-	  </div>
-	  <div id="textbox" class="row">
-		<!-- <div class="four columns offset-by-four"> -->
-        <!--
-          <div id="child_0" class="u-cf">
-              <div id="centerout" class="u-cf">
-                  <div id="centerin">
-                      <div id='loaderback'>
-                          <div class="loader">Loading...</div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-        -->
-			<div id="parent">
-			  <div class="article" id="child_1">
-				<h5>No of passages</h5>
-				<hr class="hline categ1"><span id="c0">x</span><br/>
-				<hr class="hline categ2"><span id="c1">x</span><br/>
-				<hr class="hline categ3"><span id="c2">x</span><br/>
-				<hr class="hline categ4"><span id="c3">x</span><br/>
-				<hr class="hline categ5"><span id="c4">x</span><br/>
-			  </div>
-			  <div class="article" id="child_2">
-			  <h5>Solution</h5>
-			  <strong>Source code is on</strong>
-			  <a target="_blank" href="https://github.com/bonham/gpx_track_neighborhood">
-			  github</a>
-			  <br><br>
-			  <a target="_blank" href="https://postgis.net/">Postgis</a> spatial database<br>
-			  <a target="_blank" href="http://www.gdal.org/">GDAL</a> to import GPX tracks<br>
-			  <a target="_blank" href="https://openlayers.org/">Openlayers</a> map display library<br>
-			  <a target="_blank" href="http://getskeleton.com/">Skeleton</a> CSS template<br>
-			  <a target="_blank" href="https://www.python.org/">Python</a> for automation<br>
-			  <a target="_blank" href="https://www.qgis.org/">QGIS</a> for data preview<br>			  
-			  <br>
-  			  Run it yourself - read the
-			  <a target="_blank" href="https://github.com/bonham/gpx_track_neighborhood/blob/master/README.md">
-			  documentation</a>
-
-			  
-			  
-			  </div>
+					<ul>
+						<li id="but_guide_listelement"><a id="but_guide" class="button button-primary" href="#">Guide</a></li>
+						<li><a id="but_solution" class="button button-primary" href="#">About</a></li>
+					</ul>
+				</nav>
 			</div>
-		<!-- </div> -->
-	  </div>
+		</div>
+		<div id="maprow" class="row">
+			<div id="map" class="twelve columns" />
+		</div>
+		<div id="textbox" class="row">
 
-  </div>
-  <!-- Openlayers -->
-  <script src="load_tracks.js"></script>
+			<div id="parent">
+				<div class="article" id="child_1">
+					<h5>No of passages</h5>
+					<hr class="hline categ1"><span id="c0">x</span><br />
+					<hr class="hline categ2"><span id="c1">x</span><br />
+					<hr class="hline categ3"><span id="c2">x</span><br />
+					<hr class="hline categ4"><span id="c3">x</span><br />
+					<hr class="hline categ5"><span id="c4">x</span><br />
+				</div>
+				<div class="article" id="child_2">
+					<h5>Solution</h5>
+					<strong>Source code is on</strong>
+					<a target="_blank" href="https://github.com/bonham/gpx_track_neighborhood">
+						github</a>
+					<br><br>
+					<a target="_blank" href="https://postgis.net/">Postgis</a> spatial database<br>
+					<a target="_blank" href="http://www.gdal.org/">GDAL</a> to import GPX tracks<br>
+					<a target="_blank" href="https://openlayers.org/">Openlayers</a> map display library<br>
+					<a target="_blank" href="http://getskeleton.com/">Skeleton</a> CSS template<br>
+					<a target="_blank" href="https://www.python.org/">Python</a> for automation<br>
+					<a target="_blank" href="https://www.qgis.org/">QGIS</a> for data preview<br>
+					<br>
+					Run it yourself - read the
+					<a target="_blank" href="https://github.com/bonham/gpx_track_neighborhood/blob/master/README.md">
+						documentation</a>
 
-	 
-
-<!-- 	
-    <div class="row">
-      <div class="eight columns offset-by-two">
-        <h1>GPX Track Proximator
-		<h4>Meine Seite</h4>
-        <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
-      </div>
-    </div>
- -->
-  </div>
 
 
+				</div>
+			</div>
+			<!-- </div> -->
+		</div>
 
-<!-- End Document -->
+	</div>
+	<!-- Openlayers -->
+	<script src="load_tracks.js"></script>
+
+	<!-- End Document -->
 </body>
+
 </html>

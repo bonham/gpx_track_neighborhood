@@ -57,13 +57,16 @@ $(document).ready(function() {
   });
   $(document).on('click', hidePopups);
 
-  // prepare buttons for each subdir(label)
+  // Load list of track sets
   var fpath = 'geojson/datasets.json';
   $.getJSON(fpath, function(data) {
+
+    // prepare buttons for each set (label)
     $.each(data, function(index, value){
       prepareButton(value);
     });
 
+    // load tracks for set
     var startLabel = data[0];
     switchMap(startLabel);
     setActiveButton($('#but_' + startLabel));

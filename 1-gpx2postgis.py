@@ -20,7 +20,7 @@ def main():
     pre_check()
 
     # parse args
-    (directory, database_name) = a_parse()
+    (directory, database_name, appendmode) = a_parse()
 
     # get gpx filenames
     gpx_filelist = getfiles(directory)
@@ -28,7 +28,7 @@ def main():
 
     # import files into database
     print("(Re-) creating database {}".format(database_name))
-    ogrimport(gpx_filelist, database_name)
+    ogrimport(gpx_filelist, database_name, appendmode)
     
 
 
@@ -40,11 +40,17 @@ def a_parse():
             )
     parser.add_argument('source_directory')
     parser.add_argument('database')
+    parser.add_argument(
+        '-a',
+        '--append',
+        action='store_true',
+        help="Do not delete database, but append track to existing database")
     args = parser.parse_args()
 
     database_name = args.database
     directory = args.source_directory
-    return directory, database_name
+    appendmode = args.append
+    return directory, database_name, appendmode
 
 
 #--------------------------------
@@ -102,39 +108,44 @@ class ExecuteSQLFile:
         
 
 		
-def ogrimport(filelist, database_name):
+def ogrimport(filelist, database_name, appendmode):
 
     # connect to postgres db
+    deleteDatabase = not appendmode
     
-    sysDBconn = pg2.connect(
-                "dbname={} user={}".format("postgres", PG_USER))
-    sysDBconn.set_isolation_level(pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    if (deleteDatabase):
 
-    sysDBcur = sysDBconn.cursor()
+        # connect to system database 'postgres' first
+        sysDBconn = pg2.connect(
+                    "dbname={} user={}".format("postgres", PG_USER))
+        sysDBconn.set_isolation_level(pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
-    # sql setup
-    sql1 = "drop database if exists {0}".format(database_name)
-    sql2 = "create database {0}".format(database_name)
+        sysDBcur = sysDBconn.cursor()
 
-    sysDBcur.execute(sql1)
-    sysDBcur.execute(sql2)
-    sysDBconn.close()
+        # sql setup
+        sql1 = "drop database if exists {0}".format(database_name)
+        sql2 = "create database {0}".format(database_name)
+
+        sysDBcur.execute(sql1)
+        sysDBcur.execute(sql2)
+        sysDBconn.close()
 
     # connect to newly created db
     conn = pg2.connect(
                 "dbname={} user={}".format(database_name, PG_USER))
     conn.set_isolation_level(pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
-
-    # create postgis extension
-    sql3 = "create extension postgis"
-    cur.execute(sql3)
-
-    # pre-create layer tables
     exf = ExecuteSQLFile(conn)
-    exf.execFile('sql_0_0_create_track_files_table.sql')
-    exf.execFile('sql_0_1_create_all_tracks_table.sql')
-    exf.execFile('sql_0_2_create_all_track_points_table.sql')
+
+    if (deleteDatabase):
+        # create postgis extension
+        sql3 = "create extension postgis"
+        cur.execute(sql3)
+
+        # pre-create layer tables
+        exf.execFile('sql_0_0_create_track_files_table.sql')
+        exf.execFile('sql_0_1_create_all_tracks_table.sql')
+        exf.execFile('sql_0_2_create_all_track_points_table.sql')
 	
     # ogr
     ogr_connstring = "PG:dbname={} user={}".format(database_name, PG_USER)
@@ -155,12 +166,14 @@ def ogrimport(filelist, database_name):
                 "tracks"
                 )
 
-        print("=== Processing {} with command {}".format(gpxfile, " ".join(cmd)))
-        subprocess.check_call(cmd)
-
         sql4 = "select nextval('track_files_seq')"
         cur.execute(sql4)
         file_id = cur.fetchone()[0]
+        print()
+        print("=== Track file number {}".format(file_id))
+
+        print("=== Processing {} with command {}".format(gpxfile, " ".join(cmd)))
+        subprocess.check_call(cmd)
 
         exf.execFile('sql_0_5_insert_track_file.sql', [file_id, gpxfile])
         exf.execFile('sql_0_6_insert_all_tracks.sql', [file_id])

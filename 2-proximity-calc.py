@@ -5,31 +5,42 @@ import os
 import subprocess
 import psycopg2
 
-if sys.version_info < (3,6):
-    raise RuntimeError("You must use python 3.6, You are using python {}.{}.{}".format(*sys.version_info[0:3]))
+if sys.version_info < (3, 6):
+    raise RuntimeError("You must use python 3.6, You are using python {}.{}.{}".format(
+        *sys.version_info[0:3]))
 
 # constants
 
-PG_USER="postgres"
-RADIUS_DEFAULT=30
-TRACKS_TABLE="all_tracks"
-TRACKPOINTS_TABLE="all_track_points"
+PG_USER = "postgres"
+RADIUS_DEFAULT = 30
+TRACKS_TABLE = "all_tracks"
+TRACKPOINTS_TABLE = "all_track_points"
+
 
 def main():
 
     # parse args
-    (database_name, radius) = a_parse()
+    (database_name, host, db_user, password, radius) = a_parse()
 
     # connect to db
     conn = psycopg2.connect(
-                "dbname={} user={}".format(database_name, PG_USER))
+        "dbname={} host={} user={} password={}".format(
+            database_name,
+            host,
+            db_user,
+            password))
     cur = conn.cursor()
 
     # connection for vacuum
     conn_vac = psycopg2.connect(
-                "dbname={} user={}".format(database_name, PG_USER))
+        "dbname={} host={} user={} password={}".format(
+            database_name,
+            host,
+            db_user,
+            password))
 
-    conn_vac.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    conn_vac.set_isolation_level(
+        psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     vac(conn_vac, TRACKS_TABLE)
     vac(conn_vac, TRACKPOINTS_TABLE)
 
@@ -45,33 +56,57 @@ def main():
     print("Calculating frequency")
     calc_frequency(conn)
     vac(conn_vac, "frequency")
-    
 
 
-#--------------------------------
+# --------------------------------
 def a_parse():
     parser = argparse.ArgumentParser(
-            description = 
-                'Load GPX files in specified directory into postgis database'
-            )
+        description='Load GPX files in specified directory into postgis database'
+    )
     parser.add_argument('database')
-    parser.add_argument('--radius',help="Radius in meters around a trackpoint, where we search for nearby tracks. Default is {}m".format(RADIUS_DEFAULT), default=RADIUS_DEFAULT )
+    parser.add_argument('--radius', help="Radius in meters around a trackpoint, where we search for nearby tracks. Default is {}m".format(
+        RADIUS_DEFAULT), default=RADIUS_DEFAULT)
+
+    parser.add_argument(
+        '-n',
+        '--host',
+        default='localhost',
+        help="Database Host")
+    parser.add_argument(
+        '-u',
+        '--user',
+        default=PG_USER,
+        help="Database user")
+    parser.add_argument(
+        '-p',
+        '--password',
+        default='',
+        help="Database Password")
     args = parser.parse_args()
 
-    return args.database, args.radius
+    return (
+        args.database,
+        args.host,
+        args.user,
+        args.password,
+        args.radius
+    )
 
-#--------------------------------
+# --------------------------------
+
+
 def joinsegments(conn, distance):
 
-    with open('sql/sql_1_joinsegments.sql',"r") as f:
+    with open('sql/sql_1_joinsegments.sql', "r") as f:
         sql = f.read()
         cur = conn.cursor()
         cur.execute(sql.format(distance))
         conn.commit()
 
+
 def create_circles(conn, radius):
 
-    with open('sql/sql_2_create_circles.sql',"r") as f:
+    with open('sql/sql_2_create_circles.sql', "r") as f:
         sql = f.read()
         cur = conn.cursor()
         print("Execute")
@@ -80,12 +115,13 @@ def create_circles(conn, radius):
         conn.commit()
         print("Commit done")
 
+
 def calc_frequency(conn):
 
     cur = conn.cursor()
 
     # create table
-    with open('sql/sql_30_create_freq_tab.sql',"r") as f:
+    with open('sql/sql_30_create_freq_tab.sql', "r") as f:
         sql = f.read()
         cur.execute(sql)
         conn.commit()
@@ -93,9 +129,9 @@ def calc_frequency(conn):
     # read list of track ids
     sql2 = None
 
-    with open('sql/sql_31_get_track_fid.sql',"r") as f:
+    with open('sql/sql_31_get_track_fid.sql', "r") as f:
         sql2 = f.read()
-        
+
     cur.execute(sql2)
     tracks = cur.fetchall()
     num_ids = len(tracks)
@@ -103,23 +139,25 @@ def calc_frequency(conn):
     # make intersections for each point
 
     sql3 = None
-    with open('sql/sql_32_calcfreq_template.sql',"r") as f3:
+    with open('sql/sql_32_calcfreq_template.sql', "r") as f3:
         sql3 = f3.read()
 
     for (tid, name, file_path) in tracks:
 
         fname = os.path.basename(file_path)
         print("")
-        print("Intersecting for track id {}/{} {} {}".format(tid, num_ids, str(name), fname))
+        print("Intersecting for track id {}/{} {} {}".format(tid,
+                                                             num_ids, str(name), fname))
         printstats(conn, tid)
         tsql = sql3.format(tid)
         cur.execute(tsql)
         conn.commit()
 
+
 def printstats(conn, track_fid):
 
     sqlTempl = None
-    with open('sql/sql_32_1_intersect_stats.sql',"r") as f:
+    with open('sql/sql_32_1_intersect_stats.sql', "r") as f:
         sqlTempl = f.read()
 
     cur = conn.cursor()
@@ -132,10 +170,10 @@ def printstats(conn, track_fid):
         fname = os.path.basename(fpath)
         print("{:5d} {:30s} {}".format(numpoints, fname, tname))
 
+
 def vac(conn, table):
     cur = conn.cursor()
     cur.execute("vacuum analyze {}".format(table))
-        
 
 
 ###################################################

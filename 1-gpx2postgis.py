@@ -12,7 +12,7 @@ if sys.version_info < (3, 6):
 # constants
 
 PG_USER = "postgres"
-OGR2OGR = "ogr2ogr"
+OGR2OGR = os.environ.get('OGR2OGR') or "ogr2ogr"
 
 
 def main():
@@ -47,14 +47,17 @@ def a_parse():
     parser.add_argument(
         '-n',
         '--host',
+        default='localhost',
         help="Database Host")
     parser.add_argument(
         '-u',
         '--user',
+        default='postgres',
         help="Database user")
     parser.add_argument(
         '-p',
         '--password',
+        default='',
         help="Database Password")
     args = parser.parse_args()
 

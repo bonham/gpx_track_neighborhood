@@ -12,6 +12,7 @@ if sys.version_info < (3, 6):
 # constants
 
 PG_USER = "postgres"
+PG_ADMIN_DB = "postgres"
 OGR2OGR = os.environ.get('OGR2OGR') or "ogr2ogr"
 
 
@@ -52,7 +53,7 @@ def a_parse():
     parser.add_argument(
         '-u',
         '--user',
-        default='postgres',
+        default=PG_USER,
         help="Database user")
     parser.add_argument(
         '-p',
@@ -123,19 +124,17 @@ class ExecuteSQLFile:
             self.conn.commit()
 
 
-def ogrimport(filelist, database_name, appendmode, host, user, password):
+def ogrimport(filelist, database_name, appendmode, host, db_user, password):
 
     # connect to postgres db
     deleteDatabase = not appendmode
-
-    db_user = PG_USER or user
 
     if (deleteDatabase):
 
         # connect to system database 'postgres' first
         sysDBconn = pg2.connect(
             "dbname={} host={} user={} password={}".format(
-                "postgres",
+                PG_ADMIN_DB,
                 host,
                 db_user,
                 password))
@@ -185,12 +184,9 @@ def ogrimport(filelist, database_name, appendmode, host, user, password):
 
         cmd = (
             OGR2OGR,
-            "-append",
             "-f",
             "PostgreSQL",
-            "-preserve_fid",
-            "-overwrite",
-            ogr_connstring,
+                ogr_connstring,
             gpxfile,
             "track_points",
             "tracks"
@@ -203,7 +199,11 @@ def ogrimport(filelist, database_name, appendmode, host, user, password):
         print("=== Track file number {}".format(file_id))
 
         print("=== Processing {} with command {}".format(gpxfile, " ".join(cmd)))
-        subprocess.check_call(cmd)
+        procresult = subprocess.run(cmd, capture_output=True)
+        if ('ERROR' in str(procresult.stderr) or procresult.returncode != 0):
+            raise RuntimeError(
+                "ogr command not successful: {}".format(
+                    procresult))
 
         exf.execFile('sql_0_5_insert_track_file.sql', [file_id, gpxfile])
         exf.execFile('sql_0_6_insert_all_tracks.sql', [file_id])

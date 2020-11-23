@@ -8,24 +8,30 @@ import json
 import shutil
 import json
 
-if sys.version_info < (3,6):
-    raise RuntimeError("You must use python 3.6, You are using python {}.{}.{}".format(*sys.version_info[0:3]))
+if sys.version_info < (3, 6):
+    raise RuntimeError("You must use python 3.6, You are using python {}.{}.{}".format(
+        *sys.version_info[0:3]))
 
 # constants
 
-PG_USER="postgres"
-METADATA_FNAME="datasets.json"
-BASEDIR=os.path.normpath("html/static/geojson")
+PG_USER = "postgres"
+METADATA_FNAME = "datasets.json"
+BASEDIR = os.path.normpath("html/static/geojson")
 MAXCATEGORIES = 5
+
 
 def main():
 
     # parse args
-    (database_name, outputDir, mode) = a_parse()
+    (database_name, host, db_user, password, outputDir, mode) = a_parse()
 
     # connect to db
     conn = psycopg2.connect(
-                "dbname={} user={}".format(database_name, PG_USER))
+        "dbname={} host={} user={} password={}".format(
+            database_name,
+            host,
+            db_user,
+            password))
     cur = conn.cursor()
 
     geodir = os.path.join(BASEDIR, outputDir)
@@ -33,21 +39,22 @@ def main():
     cleanup(geodir)
     create_extend_metadata(BASEDIR, METADATA_FNAME, outputDir)
 
+    (geometryList, categoryList) = (None, None)
     if mode == "category":
 
-        ( geometryList, categoryList ) = queryCategoryMode(cur)
+        (geometryList, categoryList) = queryCategoryMode(cur)
 
     elif mode == 'plain':
 
-        ( geometryList, categoryList ) = queryPlainMode(cur, MAXCATEGORIES)
-
+        (geometryList, categoryList) = queryPlainMode(cur, MAXCATEGORIES)
 
     legendFilePath = os.path.join(geodir, "legend.json")
     writeLegendFile(legendFilePath, categoryList)
 
-    # print categories 
+    # print categories
     for item in categoryList:
-        print("Category {}: {:3} - {:3}".format(item["category"], item["min"], item["max"]))
+        print(
+            "Category {}: {:3} - {:3}".format(item["category"], item["min"], item["max"]))
 
     writeGeoJsonFiles(geometryList, geodir)
 
@@ -55,26 +62,46 @@ def main():
     writeNumTracksFile(numTrackFilePath, len(geometryList))
 
 
-
-
-#--------------------------------
+# --------------------------------
 def a_parse():
     parser = argparse.ArgumentParser(
-            description = 
-                'Write gpx tracks as geojson to disk. The output directory will be "html/static/geojson/<dataset_label>/'
-            )
+        description='Write gpx tracks as geojson to disk. The output directory will be "html/static/geojson/<dataset_label>/'
+    )
     parser.add_argument('database')
-    parser.add_argument('dataset_label', help="This should be a unique label of your gpx set. E.g '2019'")
     parser.add_argument(
-            '-m',
-            default="category",
-            type=str,
-            choices=('category','plain'),
-            help="Extraction mode. Possible values: category|plain. If you omit the flag, the default is category")
+        '-n',
+        '--host',
+        default='localhost',
+        help="Database Host")
+    parser.add_argument(
+        '-u',
+        '--user',
+        default=PG_USER,
+        help="Database user")
+    parser.add_argument(
+        '-p',
+        '--password',
+        default='',
+        help="Database Password")
+    parser.add_argument(
+        'dataset_label', help="This should be a unique label of your gpx set. E.g '2019'")
+    parser.add_argument(
+        '-m',
+        default="category",
+        type=str,
+        choices=('category', 'plain'),
+        help="Extraction mode. Possible values: category|plain. If you omit the flag, the default is category")
     args = parser.parse_args()
 
     print("Mode is {}".format(args.m))
-    return (args.database, args.dataset_label, args.m)
+    return (
+        args.database,
+        args.host,
+        args.user,
+        args.password,
+        args.dataset_label,
+        args.m
+    )
 
 
 def cleanup(geodir):
@@ -83,14 +110,15 @@ def cleanup(geodir):
     print("Removing {}".format(geodir))
     if os.path.exists(geodir) and os.path.isdir(geodir):
         shutil.rmtree(geodir)
-    
+
     # recreate directory ( including parents )
     os.makedirs(geodir, exist_ok=True)
+
 
 def create_extend_metadata(directory, filename, label):
 
     fpath = os.path.join(directory, filename)
-    
+
     # Create file if it is not existing
     if os.path.exists(fpath):
 
@@ -100,7 +128,6 @@ def create_extend_metadata(directory, filename, label):
     else:
 
         mdata = []
-
 
     # Insert label at beginning of list if not in list
     if label not in mdata:
@@ -128,7 +155,7 @@ def queryCategoryMode(cur):
     for row in r:
         (realcat, js, minfreq, maxfreq) = row
         geometryList.append(js)
-        categoryList.append( { "category": i, "min": minfreq, "max": maxfreq } )
+        categoryList.append({"category": i, "min": minfreq, "max": maxfreq})
         i += 1
 
     return (geometryList, categoryList)
@@ -137,7 +164,8 @@ def queryCategoryMode(cur):
 def queryPlainMode(cur, maxCategories):
 
     # read geojson
-    cur.execute("select track_id, ST_AsGeoJSON(wkb_geometry) from all_tracks order by track_id")
+    cur.execute(
+        "select track_id, ST_AsGeoJSON(wkb_geometry) from all_tracks order by track_id")
     r = cur.fetchall()
 
     geometryList = []
@@ -149,7 +177,8 @@ def queryPlainMode(cur, maxCategories):
         geometryList.append(js)
 
         if i <= maxCategories:
-            categoryList.append( { "category": i, "min": track_id, "max": track_id } )
+            categoryList.append(
+                {"category": i, "min": track_id, "max": track_id})
         i += 1
 
     return (geometryList, categoryList)
@@ -162,28 +191,29 @@ def writeGeoJsonFiles(geomList, geodir):
 
         fname = os.path.join(geodir, "g_{}.json".format(i))
         print("Writing "+fname)
-        with open(fname,"w") as f:
+        with open(fname, "w") as f:
             f.write(js)
 
-        i += 1;
+        i += 1
+
 
 def writeNumTracksFile(fpath, num):
 
     # write file about how many tracks we have
     print("Writing {}".format(fpath))
     with open(fpath, "w") as fp:
-       json.dump(
-               {"numberOfTrackFiles": num},
-               fp
-               )
-    
+        json.dump(
+            {"numberOfTrackFiles": num},
+            fp
+        )
+
+
 def writeLegendFile(fpath, cat_frequencies):
 
     # dump file for legend
     print("Writing {}".format(fpath))
     with open(fpath, "w") as legendfile:
         json.dump(cat_frequencies, legendfile)
-
 
 
 ###################################################

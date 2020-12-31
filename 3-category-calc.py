@@ -15,15 +15,16 @@ PG_USER = "postgres"
 def main():
 
     # parse args
-    (database_name, host, db_user, password) = a_parse()
+    (database_name, host, db_user, password, dbport) = a_parse()
 
     # connect to db
     conn = psycopg2.connect(
-        "dbname={} host={} user={} password={}".format(
+        "dbname={} host={} user={} password={} port{}".format(
             database_name,
             host,
             db_user,
-            password))
+            password,
+            dbport))
     cur = conn.cursor()
 
     # calc
@@ -62,6 +63,10 @@ def a_parse():
         '--password',
         default='',
         help="Database Password")
+    parser.add_argument(
+        '--port',
+        default='5432',
+        help="Database Port")
     args = parser.parse_args()
 
     return (
@@ -69,6 +74,7 @@ def a_parse():
         args.host,
         args.user,
         args.password,
+        args.port,
     )
 
 

@@ -1,0 +1,35 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: gpx2postgis",
+      "type": "python",
+      "request": "launch",
+      "program": "1-gpx2postgis.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--port",
+        "5432",
+        // "-p",
+        // "dummy",
+        "tracks/Regiotouren",
+        "regiotest"
+      ]
+    },
+    {
+      "name": "Python: proximity-calc",
+      "type": "python",
+      "request": "launch",
+      "program": "2-proximity-calc.py",
+      "console": "integratedTerminal",
+      "args": [
+        "-p",
+        "xyz",
+        "regio"
+      ]
+    }
+  ]
+}

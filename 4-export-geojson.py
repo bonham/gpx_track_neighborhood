@@ -23,15 +23,16 @@ MAXCATEGORIES = 5
 def main():
 
     # parse args
-    (database_name, host, db_user, password, outputDir, mode) = a_parse()
+    (database_name, host, db_user, password, dbport, outputDir, mode) = a_parse()
 
     # connect to db
     conn = psycopg2.connect(
-        "dbname={} host={} user={} password={}".format(
+        "dbname={} host={} user={} password={} port={}".format(
             database_name,
             host,
             db_user,
-            password))
+            password,
+            dbport))
     cur = conn.cursor()
 
     geodir = os.path.join(BASEDIR, outputDir)
@@ -91,6 +92,10 @@ def a_parse():
         type=str,
         choices=('category', 'plain'),
         help="Extraction mode. Possible values: category|plain. If you omit the flag, the default is category")
+    parser.add_argument(
+        '--port',
+        default='5432',
+        help="Database Port")
     args = parser.parse_args()
 
     print("Mode is {}".format(args.m))
@@ -99,6 +104,7 @@ def a_parse():
         args.host,
         args.user,
         args.password,
+        args.port,
         args.dataset_label,
         args.m
     )

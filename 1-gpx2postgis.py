@@ -22,7 +22,7 @@ def main():
     pre_check()
 
     # parse args
-    (directory, database_name, appendmode, host, user, password) = a_parse()
+    (database_name, host, user, password, dbport, directory, appendmode) = a_parse()
 
     # get gpx filenames
     gpx_filelist = getfiles(directory)
@@ -30,7 +30,8 @@ def main():
 
     # import files into database
     print("(Re-) creating database {}".format(database_name))
-    ogrimport(gpx_filelist, database_name, appendmode, host, user, password)
+    ogrimport(gpx_filelist, database_name, appendmode,
+              host, user, password, dbport)
 
 
 # --------------------------------
@@ -60,12 +61,20 @@ def a_parse():
         '--password',
         default='',
         help="Database Password")
+    parser.add_argument(
+        '--port',
+        default='5432',
+        help="Database Port")
     args = parser.parse_args()
 
-    database_name = args.database
-    directory = args.source_directory
-    appendmode = args.append
-    return directory, database_name, appendmode, args.host, args.user, args.password
+    return (
+        args.database,
+        args.host,
+        args.user,
+        args.password,
+        args.port,
+        args.source_directory,
+        args.append)
 
 
 # --------------------------------
@@ -124,7 +133,7 @@ class ExecuteSQLFile:
             self.conn.commit()
 
 
-def ogrimport(filelist, database_name, appendmode, host, db_user, password):
+def ogrimport(filelist, database_name, appendmode, host, db_user, password, dbport):
 
     # connect to postgres db
     deleteDatabase = not appendmode
@@ -133,11 +142,12 @@ def ogrimport(filelist, database_name, appendmode, host, db_user, password):
 
         # connect to system database 'postgres' first
         sysDBconn = pg2.connect(
-            "dbname={} host={} user={} password={}".format(
+            "dbname={} host={} user={} password={} port={}".format(
                 PG_ADMIN_DB,
                 host,
                 db_user,
-                password))
+                password,
+                dbport))
         sysDBconn.set_isolation_level(
             pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
@@ -153,11 +163,12 @@ def ogrimport(filelist, database_name, appendmode, host, db_user, password):
 
     # connect to newly created db
     conn = pg2.connect(
-        "dbname={} host={} user={} password={}".format(
+        "dbname={} host={} user={} password={} port={}".format(
             database_name,
             host,
             db_user,
-            password))
+            password,
+            dbport))
     conn.set_isolation_level(pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
     exf = ExecuteSQLFile(conn)
@@ -173,11 +184,12 @@ def ogrimport(filelist, database_name, appendmode, host, db_user, password):
         exf.execFile('sql_0_2_create_all_track_points_table.sql')
 
     # ogr
-    ogr_connstring = "PG:dbname={} host={} user={} password={}".format(
+    ogr_connstring = "PG:dbname={} host={} user={} password={} port={}".format(
         database_name,
         host,
         db_user,
-        password)
+        password,
+        dbport)
 
     # loop files
     for gpxfile in filelist:
@@ -186,7 +198,7 @@ def ogrimport(filelist, database_name, appendmode, host, db_user, password):
             OGR2OGR,
             "-f",
             "PostgreSQL",
-                ogr_connstring,
+            ogr_connstring,
             gpxfile,
             "track_points",
             "tracks"
@@ -206,7 +218,9 @@ def ogrimport(filelist, database_name, appendmode, host, db_user, password):
                     procresult))
 
         exf.execFile('sql_0_5_insert_track_file.sql', [file_id, gpxfile])
+        print("=== Copying tracks")
         exf.execFile('sql_0_6_insert_all_tracks.sql', [file_id])
+        print("=== Copying trackpoints")
         exf.execFile('sql_0_7_insert_all_trackpoints.sql', [file_id])
 
 

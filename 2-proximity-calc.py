@@ -153,8 +153,11 @@ def calc_frequency(conn):
 
         fname = os.path.basename(file_path)
         print("")
-        print("Intersecting for track id {}/{} {} {}".format(tid,
-                                                             num_ids, str(name), fname))
+        print("Intersecting for track id {}/{} {} {}".format(
+            tid,
+            num_ids,
+            str(name),
+            fname))
         printstats(conn, tid)
         tsql = sql3.format(tid)
         cur.execute(tsql)
@@ -172,14 +175,20 @@ def printstats(conn, track_fid):
     r = cur.fetchall()
 
     print("Intersecting with:")
+    print("{:5d} {:30s} {}".format(
+        "# of points",
+        "File",
+        "Track Name"))
+    print("{:5s}+{:30s}+{}".format("-" * 5, "-" * 30, "-" * 30)
+
     for (numpoints, fpath, tname, intersect_track_fid) in r:
 
-        fname = os.path.basename(fpath)
+        fname=os.path.basename(fpath)
         print("{:5d} {:30s} {}".format(numpoints, fname, tname))
 
 
 def vac(conn, table):
-    cur = conn.cursor()
+    cur=conn.cursor()
     cur.execute("vacuum analyze {}".format(table))
 
 

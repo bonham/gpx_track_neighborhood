@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+  </metadata>
+  <trk>
+    <name>Name of GPX file 1</name>
+    <trkseg>
+      <trkpt lat="49.250324000" lon="8.687196000">
+        <ele>1</ele>
+      </trkpt>
+      <trkpt lat="49.250019001" lon="8.687469003">
+        <ele>1</ele>
+      </trkpt>
+      <trkpt lat="49.249714001" lon="8.687742003">
+        <ele>1</ele>
+      </trkpt>
+    </trkseg>
+    <trkseg>
+      <trkpt lat="49.125652000" lon="8.714194000">
+        <ele>2</ele>
+      </trkpt>
+      <trkpt lat="49.125519000" lon="8.714731000">
+        <ele>2</ele>
+      </trkpt>
+      <trkpt lat="49.125414000" lon="8.715057001">
+        <ele>2</ele>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

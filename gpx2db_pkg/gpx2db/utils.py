@@ -10,6 +10,51 @@ class SetupDb:
         self.conn = database_connection
         self.cur = self.conn.cursor()
 
+    def init_db(self, drop=False):
+        "Create necessary sequences and tables"
+
+        self.check_create_extension()
+
+        if drop:
+            self.drop_objects()
+
+        cur = self.cur
+
+        self.create_sequence(self.tracks_id_sequence)
+        self.create_sequence(self.track_points_id_sequence)
+
+        sql_create_tracks_table = """
+            create table {}
+            (
+            id integer PRIMARY KEY,
+            name varchar(2000),
+            src varchar(2000),
+            wkb_geometry geometry(MultiLineString,4326)
+            )
+        """.format(
+            self.tracks_table
+        )
+        cur.execute(sql_create_tracks_table)
+        self.commit()
+
+        sql_create_points_table = """
+            create table {}
+            (
+            id integer PRIMARY KEY,
+            track_id integer REFERENCES {} (id),
+            track_segment_id integer not null,
+            segment_point_id integer not null,
+            wkb_geometry geometry(Point,4326),
+            unique ( track_id, track_segment_id, segment_point_id )
+            )
+        """.format(
+            self.track_points_table,
+            self.tracks_table
+        )
+
+        cur.execute(sql_create_points_table)
+        self.commit()
+
     def drop_objects(self):
 
         sequences = [
@@ -46,50 +91,6 @@ class SetupDb:
             self.cur.execute("create extension postgis")
             self.commit()
 
-    def init_db(self, drop=False):
-        "Create necessary sequences and tables"
-
-        self.check_create_extension()
-
-        if drop:
-            self.drop_objects()
-
-        cur = self.cur
-
-        self.create_sequence(self.tracks_id_sequence)
-        self.create_sequence(self.track_points_id_sequence)
-
-        sql_create_tracks_table = """
-            create table {}
-            (
-            id integer PRIMARY KEY,
-            name varchar(2000),
-            src varchar(2000),
-            wkb_geometry geometry(MultiLineString,4326)
-            )
-        """.format(
-            self.tracks_table
-        )
-        cur.execute(sql_create_tracks_table)
-        self.commit()
-
-        sql_create_points_table = """
-            create table {}
-            (
-            id integer PRIMARY KEY,
-            track_id integer not null,
-            track_segment_id integer not null,
-            segment_point_id integer not null,
-            wkb_geometry geometry(Point,4326),
-            unique ( track_id, track_segment_id, segment_point_id )
-            )
-        """.format(
-            self.track_points_table
-        )
-
-        cur.execute(sql_create_points_table)
-        self.commit()
-
     def create_sequence(self, sequence_name):
 
         sql = "CREATE SEQUENCE {}".format(sequence_name)
@@ -109,6 +110,7 @@ class SetupDb:
 
             track_id = self.get_nextval(self.tracks_id_sequence)
             self.store_track(track, track_id, src)
+            # self.commit()
 
             for segnum, segment in enumerate(track.segments):
                 print("Segment: {}".format(segnum))
@@ -124,8 +126,8 @@ class SetupDb:
                         pointnum
                     )
 
-        print("Committing ...")
-        self.commit()
+            print("Committing points ...")
+            self.commit()
 
     def store_track(self, track, rowid, src=None):
 
@@ -141,7 +143,6 @@ class SetupDb:
             src
         )
         self.cur.execute(sql)
-        self.commit()
 
     def store_point(self, point, rowid, track_id, track_seg_id, segment_point_id):
 
@@ -162,4 +163,3 @@ class SetupDb:
             point_wkt
         )
         self.cur.execute(sql)
-        self.commit()

@@ -10,14 +10,14 @@ my_dir = path.dirname(__file__)
 
 @pytest.fixture
 def dbconn():
-    mocking = True
+    mocking = False
 
     if mocking:
         conn = Mock()
         row1 = (1, 'peter')
         row2 = (2, 'paul')
         conn.cursor.return_value.fetchall.return_value = [row1, row2]
-        conn.cursor.return_value.fetchone.return_value = [row1]
+        conn.cursor.return_value.fetchone.return_value = row1
         return conn
 
     else:

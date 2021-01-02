@@ -17,25 +17,39 @@ class SetupDb:
             self.track_points_id_sequence
         ]
         sequence_drop_commands = [
-            "drop sequence {}".format(i) for i in sequences]
+            "drop sequence if exists {}".format(i) for i in sequences]
 
         tables = [
             self.tracks_table,
             self.track_points_table
         ]
-        table_drop_commands = ["drop table {}".format(i) for i in tables]
+        table_drop_commands = [
+            "drop table if exists {}".format(i) for i in tables]
 
         for sql in (sequence_drop_commands + table_drop_commands):
             try:
                 self.cur.execute(sql)
             except Exception as e:
                 print(e)
+            self.commit()
 
     def commit(self):
         self.conn.commit()
 
+    def check_create_extension(self):
+
+        self.cur.execute(
+            "SELECT extname FROM pg_extension where extname = 'postgis'")
+        r = self.cur.fetchall()
+
+        if len(r) == 0:
+            self.cur.execute("create extension postgis")
+            self.commit()
+
     def init_db(self, drop=False):
         "Create necessary sequences and tables"
+
+        self.check_create_extension()
 
         if drop:
             self.drop_objects()
@@ -57,6 +71,7 @@ class SetupDb:
             self.tracks_table
         )
         cur.execute(sql_create_tracks_table)
+        self.commit()
 
         sql_create_points_table = """
             create table {}
@@ -64,23 +79,26 @@ class SetupDb:
             id integer PRIMARY KEY,
             track_id integer not null,
             track_segment_id integer not null,
+            segment_point_id integer not null,
             wkb_geometry geometry(Point,4326),
-            unique ( track_id, track_segment_id )
+            unique ( track_id, track_segment_id, segment_point_id )
             )
         """.format(
             self.track_points_table
         )
 
         cur.execute(sql_create_points_table)
+        self.commit()
 
     def create_sequence(self, sequence_name):
 
         sql = "CREATE SEQUENCE {}".format(sequence_name)
         self.cur.execute(sql)
+        self.commit()
 
     def get_nextval(self, sequence):
 
-        sql = "select nextval({})".format(sequence)
+        sql = "select nextval('{}')".format(sequence)
         self.cur.execute(sql)
         row = self.cur.fetchone()
         return row[0]
@@ -95,13 +113,15 @@ class SetupDb:
             for segnum, segment in enumerate(track.segments):
                 print("Segment: {}".format(segnum))
 
-                for point in segment.points:
+                for pointnum, point in enumerate(segment.points):
+
                     point_id = self.get_nextval(self.track_points_id_sequence)
                     self.store_point(
                         point,
                         point_id,
                         track_id,
-                        segnum
+                        segnum,
+                        pointnum
                     )
 
         print("Committing ...")
@@ -113,7 +133,7 @@ class SetupDb:
 
         sql = """
             insert into {} (id, name, src)
-            values({},{},{}
+            values({},'{}','{}')
         """.format(
             self.tracks_table,
             rowid,
@@ -121,20 +141,25 @@ class SetupDb:
             src
         )
         self.cur.execute(sql)
+        self.commit()
 
-    def store_point(self, point, rowid, track_id, track_seg_id):
+    def store_point(self, point, rowid, track_id, track_seg_id, segment_point_id):
 
         point_wkt = "ST_GeomFromText('POINT({} {})', 4326)".format(
             point.longitude,
             point.latitude
         )
 
-        sql_template = """
-            insert into {} (id, track_id, track_segment_id, wkb_geometry)
-            values({},{},{},{})
+        sql = """
+            insert into {} (id, track_id, track_segment_id, segment_point_id, wkb_geometry)
+            values({},{},{},{},{})
         """.format(
+            self.track_points_table,
             rowid,
             track_id,
             track_seg_id,
+            segment_point_id,
             point_wkt
         )
+        self.cur.execute(sql)
+        self.commit()

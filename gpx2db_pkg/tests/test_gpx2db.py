@@ -2,7 +2,7 @@ import pytest
 from mock import Mock
 from gpx2db import SetupDb
 import gpxpy
-from os import path
+from os import path, environ
 import psycopg2 as pg2
 
 my_dir = path.dirname(__file__)
@@ -10,14 +10,21 @@ my_dir = path.dirname(__file__)
 
 @pytest.fixture
 def dbconn():
-    mocking = False
+    mocking = True
 
     if mocking:
-        return Mock()
+        conn = Mock()
+        row1 = (1, 'peter')
+        row2 = (2, 'paul')
+        conn.cursor.return_value.fetchall.return_value = [row1, row2]
+        conn.cursor.return_value.fetchone.return_value = [row1]
+        return conn
+
     else:
+        password = environ.get('PGPASS')
         sysDBconn = pg2.connect(
             "dbname={} host={} user={} password={} port={}".format(
-                "test3", "localhost", "postgres", "xxx", 5432
+                "test3", "localhost", "postgres", password, 5432
             )
         )
         return sysDBconn

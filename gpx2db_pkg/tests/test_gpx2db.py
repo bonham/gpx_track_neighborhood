@@ -10,7 +10,9 @@ my_dir = path.dirname(__file__)
 
 @pytest.fixture
 def dbconn():
-    mocking = False
+
+    # Set this to False if you have a real backend ( empty DB )
+    mocking = True
 
     if mocking:
         conn = Mock()

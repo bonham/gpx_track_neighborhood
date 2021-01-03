@@ -53,3 +53,4 @@ class TestGpx2Db:
         sd = SetupDb(dbconn)
         sd.init_db(drop=True)
         sd.load_gpx_file(gpxpy_obj(1), src="file1")
+        sd.load_gpx_file(gpxpy_obj(1), src="file2")

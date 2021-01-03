@@ -65,8 +65,8 @@ class SetupDb:
             "drop sequence if exists {}".format(i) for i in sequences]
 
         tables = [
+            self.track_points_table,
             self.tracks_table,
-            self.track_points_table
         ]
         table_drop_commands = [
             "drop table if exists {}".format(i) for i in tables]
@@ -126,7 +126,8 @@ class SetupDb:
                         pointnum
                     )
 
-            print("Committing points ...")
+            self.track_update_geometry(track_id)
+            print("Committing ...")
             self.commit()
 
     def store_track(self, track, rowid, src=None):
@@ -162,4 +163,20 @@ class SetupDb:
             segment_point_id,
             point_wkt
         )
+        self.cur.execute(sql)
+
+    def track_update_geometry(self, track_id):
+
+        sql = """
+            with base as (
+                select ST_MakeLine(wkb_geometry order by id) as wkb_geometry 
+                from track_points where track_id = {0}
+            )
+            update tracks set wkb_geometry = subquery.wkb_geometry from (
+                select ST_Collect(wkb_geometry) as wkb_geometry
+                from base
+            ) as subquery
+            where id = {0}
+        """.format(track_id)
+
         self.cur.execute(sql)

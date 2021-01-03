@@ -1,4 +1,4 @@
-class SetupDb:
+class Gpx2db:
 
     def __init__(self, database_connection):
 

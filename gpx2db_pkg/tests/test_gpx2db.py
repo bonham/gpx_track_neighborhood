@@ -1,6 +1,6 @@
 import pytest
 from mock import Mock
-from gpx2db import SetupDb
+from gpx2db import Gpx2db
 import gpxpy
 from os import path, environ
 import psycopg2 as pg2
@@ -24,12 +24,12 @@ def dbconn():
 
     else:
         password = environ.get('PGPASS')
-        sysDBconn = pg2.connect(
+        syg2dBconn = pg2.connect(
             "dbname={} host={} user={} password={} port={}".format(
                 "test3", "localhost", "postgres", password, 5432
             )
         )
-        return sysDBconn
+        return syg2dBconn
 
 
 @ pytest.fixture
@@ -52,7 +52,7 @@ class TestGpx2Db:
 
     def test1(self, dbconn, gpxpy_obj):
 
-        sd = SetupDb(dbconn)
-        sd.init_db(drop=True)
-        sd.load_gpx_file(gpxpy_obj(1), src="file1")
-        sd.load_gpx_file(gpxpy_obj(1), src="file2")
+        g2d = Gpx2db(dbconn)
+        g2d.init_db(drop=True)
+        g2d.load_gpx_file(gpxpy_obj(1), src="file1")
+        g2d.load_gpx_file(gpxpy_obj(1), src="file2")

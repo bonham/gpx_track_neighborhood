@@ -40,7 +40,7 @@ class Gpx2db:
         sql_create_points_table = """
             create table {}
             (
-            id integer PRIMARY KEY,
+            id integer PRIMARY KEY DEFAULT nextval('{}'::regclass),
             track_id integer REFERENCES {} (id),
             track_segment_id integer not null,
             segment_point_id integer not null,
@@ -49,6 +49,7 @@ class Gpx2db:
             )
         """.format(
             self.track_points_table,
+            self.track_points_id_sequence,
             self.tracks_table
         )
 
@@ -57,13 +58,6 @@ class Gpx2db:
 
     def drop_objects(self):
 
-        sequences = [
-            self.tracks_id_sequence,
-            self.track_points_id_sequence
-        ]
-        sequence_drop_commands = [
-            "drop sequence if exists {}".format(i) for i in sequences]
-
         tables = [
             self.track_points_table,
             self.tracks_table,
@@ -71,7 +65,14 @@ class Gpx2db:
         table_drop_commands = [
             "drop table if exists {}".format(i) for i in tables]
 
-        for sql in (sequence_drop_commands + table_drop_commands):
+        sequences = [
+            self.tracks_id_sequence,
+            self.track_points_id_sequence
+        ]
+        sequence_drop_commands = [
+            "drop sequence if exists {}".format(i) for i in sequences]
+
+        for sql in (table_drop_commands + sequence_drop_commands):
             try:
                 self.cur.execute(sql)
             except Exception as e:
@@ -110,21 +111,22 @@ class Gpx2db:
 
             track_id = self.get_nextval(self.tracks_id_sequence)
             self.store_track(track, track_id, src)
-            # self.commit()
 
             for segnum, segment in enumerate(track.segments):
                 print("Segment: {}".format(segnum))
 
+                storelist = []
                 for pointnum, point in enumerate(segment.points):
 
-                    point_id = self.get_nextval(self.track_points_id_sequence)
-                    self.store_point(
+                    storetuple = (
                         point,
-                        point_id,
                         track_id,
                         segnum,
                         pointnum
                     )
+                    storelist.append(storetuple)
+
+                self.store_points(storelist)
 
             self.track_update_geometry(track_id)
             print("Committing ...")
@@ -145,24 +147,32 @@ class Gpx2db:
         )
         self.cur.execute(sql)
 
-    def store_point(self, point, rowid, track_id, track_seg_id, segment_point_id):
+    def store_points(self, storelist):
 
-        point_wkt = "ST_GeomFromText('POINT({} {})', 4326)".format(
-            point.longitude,
-            point.latitude
+        sql = "insert into {} (track_id, track_segment_id, segment_point_id, wkb_geometry) values ".format(
+            self.track_points_table
         )
 
-        sql = """
-            insert into {} (id, track_id, track_segment_id, segment_point_id, wkb_geometry)
-            values({},{},{},{},{})
-        """.format(
-            self.track_points_table,
-            rowid,
-            track_id,
-            track_seg_id,
-            segment_point_id,
-            point_wkt
-        )
+        sql_value_list = []
+        for storetuple in storelist:
+
+            (point, track_id, track_seg_id, segment_point_id) = storetuple
+
+            point_wkt = "ST_GeomFromText('POINT({} {})', 4326)".format(
+                point.longitude,
+                point.latitude
+            )
+
+            valuepart = "({},{},{},{})".format(
+                track_id,
+                track_seg_id,
+                segment_point_id,
+                point_wkt
+            )
+
+            sql_value_list.append(valuepart)
+
+        sql += ",".join(sql_value_list)
         self.cur.execute(sql)
 
     def track_update_geometry(self, track_id):

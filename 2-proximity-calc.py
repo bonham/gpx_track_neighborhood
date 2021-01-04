@@ -11,8 +11,8 @@ if sys.version_info < (3, 6):
 
 PG_USER = "postgres"
 RADIUS_DEFAULT = 30
-TRACKS_TABLE = "all_tracks"
-TRACKPOINTS_TABLE = "all_track_points"
+TRACKS_TABLE = "tracks"
+TRACKPOINTS_TABLE = "track_points"
 
 
 def main():
@@ -168,28 +168,27 @@ def calc_frequency(conn):
         conn.commit()
 
 
-def printstats(conn, track_fid):
+def printstats(conn, track_id):
 
     sqlTempl = None
     with open('sql/sql_32_1_intersect_stats.sql', "r") as f:
         sqlTempl = f.read()
 
     cur = conn.cursor()
-    cur.execute(sqlTempl.format(track_fid))
+    cur.execute(sqlTempl.format(track_id))
     r = cur.fetchall()
 
     print("Intersecting with:")
-    print("{:5d} {:30s} {}".format(
+    print("{:5s} {:30s} {}".format(
         "# of points",
         "File",
         "Track Name"))
-    print("{:5s}+{:30s}+{}".format("-" * 5, "-" * 30, "-" * 30)
+    print("{:5s}+{:30s}+{}".format("-" * 5, "-" * 30, "-" * 30))
 
-    for (numpoints, fpath, tname, intersect_track_fid) in r:
+    for (numpoints, fpath, tname, intersect_track_id) in r:
 
-        fname=os.path.basename(fpath)
+        fname = os.path.basename(fpath)
         print("{:5d} {:30s} {}".format(numpoints, fname, tname))
-
 
 
 ###################################################

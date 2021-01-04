@@ -4,6 +4,7 @@ class Gpx2db:
 
         self.tracks_table = "tracks"
         self.tracks_id_sequence = "tracks_id"
+        self.segments_table = "segments"
         self.track_points_table = "track_points"
         self.track_points_id_sequence = "track_points_id"
 
@@ -37,6 +38,20 @@ class Gpx2db:
         cur.execute(sql_create_tracks_table)
         self.commit()
 
+        sql_create_segments_table = """
+            create table {}
+            (
+            track_id integer REFERENCES {} (id),
+            track_segment_id integer NOT NULL,
+            unique ( track_id, track_segment_id )
+            )
+        """.format(
+            self.segments_table,
+            self.tracks_table
+        )
+        cur.execute(sql_create_segments_table)
+        self.commit()
+
         sql_create_points_table = """
             create table {}
             (
@@ -59,6 +74,7 @@ class Gpx2db:
     def drop_objects(self):
 
         tables = [
+            self.segments_table,
             self.track_points_table,
             self.tracks_table,
         ]
@@ -113,8 +129,8 @@ class Gpx2db:
             self.store_track(track, track_id, src)
 
             for segnum, segment in enumerate(track.segments):
-                print("Segment: {}".format(segnum))
 
+                self.store_segment(track_id, segnum)
                 storelist = []
                 for pointnum, point in enumerate(segment.points):
 
@@ -131,6 +147,14 @@ class Gpx2db:
             self.track_update_geometry(track_id)
             print("Committing ...")
             self.commit()
+
+    def store_segment(self, track_id, segment_num):
+        sql = "insert into {} values ({},{})".format(
+            self.segments_table,
+            track_id,
+            segment_num
+        )
+        self.cur.execute(sql)
 
     def store_track(self, track, rowid, src=None):
 

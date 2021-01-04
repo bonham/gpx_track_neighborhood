@@ -13,7 +13,7 @@ my_dir = path.dirname(__file__)
 def dbconn():
 
     # Set this to False if you have a real backend ( empty DB )
-    mocking = False
+    mocking = True
 
     if mocking:
         conn = Mock()

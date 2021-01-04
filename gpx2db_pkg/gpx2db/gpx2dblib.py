@@ -145,7 +145,6 @@ class Gpx2db:
                 self.store_points(storelist)
 
             self.track_update_geometry(track_id)
-            print("Committing ...")
             self.commit()
 
     def store_segment(self, track_id, segment_num):

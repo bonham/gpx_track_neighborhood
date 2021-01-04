@@ -171,7 +171,7 @@ def queryPlainMode(cur, maxCategories):
 
     # read geojson
     cur.execute(
-        "select track_id, ST_AsGeoJSON(wkb_geometry) from all_tracks order by track_id")
+        "select id, ST_AsGeoJSON(wkb_geometry) from tracks order by id")
     r = cur.fetchall()
 
     geometryList = []

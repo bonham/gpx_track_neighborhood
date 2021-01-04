@@ -3,7 +3,7 @@ DROP TABLE if exists public.frequency;
 CREATE TABLE public.frequency
 (
     ogc_fid integer NOT NULL,
-    track_fid integer NOT NULL,
+    track_id integer NOT NULL,
     freq integer NOT NULL,
     wkb_geometry geometry(Point,4326),
     CONSTRAINT frequency2 PRIMARY KEY (ogc_fid)

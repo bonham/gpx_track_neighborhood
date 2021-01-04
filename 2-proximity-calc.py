@@ -1,8 +1,6 @@
 import sys
 import argparse
-import glob
 import os
-import subprocess
 import psycopg2
 
 if sys.version_info < (3, 6):
@@ -61,6 +59,12 @@ def main():
 
 
 # --------------------------------
+
+def vac(conn, table):
+    cur = conn.cursor()
+    cur.execute("vacuum analyze {}".format(table))
+
+
 def a_parse():
     parser = argparse.ArgumentParser(
         description='Load GPX files in specified directory into postgis database'
@@ -186,10 +190,6 @@ def printstats(conn, track_fid):
         fname=os.path.basename(fpath)
         print("{:5d} {:30s} {}".format(numpoints, fname, tname))
 
-
-def vac(conn, table):
-    cur=conn.cursor()
-    cur.execute("vacuum analyze {}".format(table))
 
 
 ###################################################

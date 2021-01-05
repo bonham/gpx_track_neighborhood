@@ -32,7 +32,11 @@ def main():
     print("Number of gpx files: {}".format(len(gpx_filelist)))
 
     # import files into database
-    print("(Re-) creating database {}".format(database_name))
+    if delete_db:
+        print("(Re-) creating database {}".format(database_name))
+    else:
+        print("Appending to database {}".format(database_name))
+
     gpximport(gpx_filelist, database_name, delete_db,
               host, user, password, dbport)
 
@@ -45,9 +49,9 @@ def a_parse():
     parser.add_argument('source_directory')
     parser.add_argument('database')
     parser.add_argument(
-        '--delete',
+        '--createdb',
         action='store_true',
-        help="Delete and recreate the database")
+        help="Create the database. If it does already exist, the old db will be overwritten!")
     parser.add_argument(
         '-n',
         '--host',
@@ -76,7 +80,7 @@ def a_parse():
         args.password,
         args.port,
         args.source_directory,
-        args.delete)
+        args.createdb)
 
 
 # --------------------------------

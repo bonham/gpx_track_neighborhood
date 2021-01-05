@@ -27,11 +27,10 @@ The finished web pages are in subdirectory <strong>html/dist</strong>. Push all 
 Developed and tested on Windows. Will very likely run on linux too.
 ## Dependencies
 
-* Install postgres 10 from https://www.postgresql.org
-* Install postgis 2.4.2 from https://postgis.net
-* Install python 3.6 or higher ( python 2.7 may also work )
-* Install psycopg2 python library for postgres access
+* Install postgres from https://www.postgresql.org ( tested with version 12, should also run with 10 or 11)
+* Install postgis 3.0.3 from https://postgis.net. Should also work with older versions e.g. 2.4.2
+* Install python 3.6 or higher
+* Install python requirements with "pip install -r requirements.txt"
 * Install gpsbabel from https://www.gpsbabel.org/
-* Install GDAL from http://www.gdal.org/ ( You need ogr2ogr command line tool )
 * Install node.js 10.15.0 ( with npm )
 * cd to `html` subdir. Then install all dependencies in [package.json](html/package.json) by running `npm install`

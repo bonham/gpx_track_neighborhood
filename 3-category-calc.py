@@ -39,8 +39,8 @@ def main():
     cur.execute(sql2)
 
     print("Done!")
-    for notice in conn.notices:
-        print(notice)
+#    for notice in conn.notices:
+#        print(notice)
 
 # --------------------------------
 

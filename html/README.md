@@ -6,7 +6,7 @@ We are using *parcel* to bundle html, javascript, css. It is generating the smal
 
 ## Prerequisites
 
-* Install node.js ( Tested with node 10.15.0 and npm 6.4.1 )
+* Install node.js ( Tested with node 12.18.3 and npm 6.14.8 )
 
 ## Steps
 

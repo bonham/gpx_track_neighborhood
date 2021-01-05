@@ -13,8 +13,11 @@ with dump as (
         tp.wkb_geometry
     from newsegments se, circles ci, newpoints tp 
     where 
+        -- only overlapping boundary box
         se.wkb_geometry && ci.wkb_geometry
+        -- assign circles to the points
         and tp.ogc_fid = ci.ogc_fid
+        -- only intersect for a single track at once ( to be able for calling code to print progress )
 		and tp.track_id = {}
 ) 
 -- Now analyze all consecutive intersections for a given circle and tracksegment. If the lines do not touch we count them. 
@@ -31,12 +34,16 @@ select
     dump1.wkb_geometry
 from dump as dump1 
 left join dump as dump2 on 
+    -- startpoint of second linestring needs to be endpoint of first linestring 
     dump1.path = dump2.path-1 and 
-    dump1.ogc_fid = dump2.ogc_fid and
+    -- only compare linestrings in same segment
     dump1.trackseg_id = dump2.trackseg_id
+    -- also it should be an intersection of the same circle: ( see tp.ogc_fid = ci.ogc_fid clause in definition of 'dump' view)
+    dump1.ogc_fid = dump2.ogc_fid and
 group by
 	dump1.ogc_fid,
     dump1.track_id,
+    -- center of circle:
     dump1.wkb_geometry
 order by
 	dump1.ogc_fid

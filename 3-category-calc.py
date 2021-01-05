@@ -19,7 +19,7 @@ def main():
 
     # connect to db
     conn = psycopg2.connect(
-        "dbname={} host={} user={} password={} port{}".format(
+        "dbname={} host={} user={} password={} port={}".format(
             database_name,
             host,
             db_user,
@@ -28,14 +28,17 @@ def main():
     cur = conn.cursor()
 
     # calc
+    print("Calculating categories ...")
     with open('sql/sql_40_calc_categories.sql', "r") as f:
         sql1 = f.read()
     cur.execute(sql1)
 
+    print("Creating category table ...")
     with open('sql/sql_42_create_category_table.sql', "r") as f:
         sql2 = f.read()
     cur.execute(sql2)
 
+    print("Done!")
     for notice in conn.notices:
         print(notice)
 

@@ -4,7 +4,7 @@ import glob
 import os
 import subprocess
 import psycopg2 as pg2
-from gpx2db import Gpx2db
+from gpx2db import Gpx2db, ExecuteSQLFile
 import gpxpy
 
 
@@ -101,42 +101,6 @@ def pre_check():
     except FileNotFoundError as e:
         print("Error: The command {} could not be found on your system".format(OGR2OGR))
         sys.exit(1)
-
-
-class ExecuteSQLFile:
-
-    def __init__(self, connection):
-
-        SQL_RELATIVE_DIR = "sql"
-
-        self.sqlBase = os.path.join(
-            os.path.dirname(__file__),
-            SQL_RELATIVE_DIR
-        )
-
-        self.conn = connection
-        self.cursor = connection.cursor()
-
-    def fpath(self, fname):
-
-        p = os.path.join(
-            self.sqlBase,
-            fname)
-
-        return p
-
-    def execFile(self, fname, sqlArgs=[], commit=True):
-
-        fpath = self.fpath(fname)
-
-        #print("Execute SQL file {}".format(fpath))
-
-        with open(fpath, "r") as f:
-            sql = f.read()
-            self.cursor.execute(sql, sqlArgs)
-
-        if commit:
-            self.conn.commit()
 
 
 def gpximport(filelist, database_name, delete_mode, host, db_user, password, dbport):

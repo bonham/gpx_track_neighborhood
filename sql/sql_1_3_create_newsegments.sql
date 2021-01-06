@@ -18,7 +18,7 @@ select
   subseg,
   track_id,
   count(ogc_fid) as numpoints,
-  ST_MakeLine(wkb_geometry) as wkb_geometry
+  ST_MakeLine(wkb_geometry order by segment_id, subseg) as wkb_geometry
 from newpoints_w_subsegments
 where subseg is not null
 group by segment_id, subseg, track_id

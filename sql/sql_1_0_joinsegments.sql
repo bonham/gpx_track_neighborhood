@@ -66,25 +66,5 @@ select
 	end as segment_id,
     wkb_geometry
 from base;
-commit;
---- new table for segments
-drop table if exists public.newsegments;
-create table public.newsegments
-(
-    segment_id integer not NULL,
-    track_id integer not null,
-    wkb_geometry geometry(LineString,4326),
-    constraint newsegments_pk primary key (segment_id)
-);
-CREATE INDEX newsegments_geom_idx
-    ON newsegments USING gist(wkb_geometry);
-    
---- insert into segment table
-insert into newsegments
-with base as (
-select * from newpoints order by ogc_fid ) 
-select segment_id, track_id, ST_MakeLine(wkb_geometry)
-from base
-group by segment_id, track_id
 
 

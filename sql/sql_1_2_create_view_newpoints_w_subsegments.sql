@@ -38,4 +38,5 @@ select
 	) as subseg,
 	wkb_geometry
 from sub1
+order by ogc_fid
 -- still it can be that subseg is null - in case there is only one point in segment_id

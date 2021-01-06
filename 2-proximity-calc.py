@@ -123,6 +123,8 @@ class Transform:
         self.executor.execFile('sql_1_0_joinsegments.sql')
         self.executor.execFile(
             'sql_1_2_create_view_newpoints_w_subsegments.sql')
+        self.executor.execFile(
+            'sql_1_3_create_newsegments.sql')
 
     def create_circles(self, radius):
 

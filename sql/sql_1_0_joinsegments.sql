@@ -6,7 +6,7 @@ drop index if exists newpoints_seg_idx;
 drop index if exists newpoints_tr_idx;
 drop index if exists newpoints_geom_idx;
 
-drop table if exists public.newpoints;
+drop table if exists public.newpoints cascade;
 create table public.newpoints
 (
     ogc_fid integer not NULL,

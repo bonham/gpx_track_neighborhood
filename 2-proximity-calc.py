@@ -114,11 +114,15 @@ class Transform:
     def __init__(self, conn):
 
         self.conn = conn
-        self.executor = ExecuteSQLFile(conn, relative_dir="sql")
+
+        sqldir = os.path.join(os.path.dirname(__file__), 'sql')
+        self.executor = ExecuteSQLFile(conn, base_dir=sqldir)
 
     def joinsegments(self):
 
         self.executor.execFile('sql_1_0_joinsegments.sql')
+        self.executor.execFile(
+            'sql_1_2_create_view_newpoints_w_subsegments.sql')
 
     def create_circles(self, radius):
 

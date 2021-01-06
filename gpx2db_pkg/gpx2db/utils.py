@@ -3,22 +3,17 @@ import os
 
 class ExecuteSQLFile:
 
-    def __init__(self, connection, relative_dir="sql"):
+    def __init__(self, connection, base_dir=''):
 
-        SQL_RELATIVE_DIR = relative_dir
-
-        self.sqlBase = os.path.join(
-            os.path.dirname(__file__),
-            SQL_RELATIVE_DIR
-        )
+        self.base_dir = base_dir
 
         self.conn = connection
-        self.cursor = connection.cursor()
+        self.cur = connection.cursor()
 
     def fpath(self, fname):
 
         p = os.path.join(
-            self.sqlBase,
+            self.base_dir,
             fname)
 
         return p
@@ -32,10 +27,10 @@ class ExecuteSQLFile:
         with open(fpath, "r") as f:
             sqltemplate = f.read()
             sql = sqltemplate.format(args)
-            self.cursor.execute(sql, sqlArgs)
+            self.cursor().execute(sql, sqlArgs)
 
         if commit:
             self.conn.commit()
 
     def cursor(self):
-        return self.cursor
+        return self.cur

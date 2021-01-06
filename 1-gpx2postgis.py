@@ -138,7 +138,8 @@ def gpximport(filelist, database_name, delete_mode, host, db_user, password, dbp
             dbport))
     conn.set_isolation_level(pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
-    exf = ExecuteSQLFile(conn)
+    sqldir = os.path.join(os.path.dirname(__file__), 'sql')
+    exf = ExecuteSQLFile(conn, base_dir=sqldir)
 
     g2d = Gpx2db(conn)
 

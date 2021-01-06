@@ -1,7 +1,7 @@
 insert into frequency( 
 --
--- First intersect all circles with all tracksegments
--- and split all intersection multilinestrings into linestrings
+-- First intersect all circles of a given track with all tracksegments from all tracks
+-- and split all intersected multilinestrings into linestrings
 with dump as (
     select 
         tp.ogc_fid, 
@@ -17,7 +17,7 @@ with dump as (
         se.wkb_geometry && ci.wkb_geometry
         -- assign circles to the points
         and tp.ogc_fid = ci.ogc_fid
-        -- only intersect for a single track at once ( to be able for calling code to print progress )
+        -- only intersect for circles of a single track at once ( to be able for calling code to print progress )
 		and tp.track_id = {}
 ) 
 -- Now analyze all consecutive intersections for a given circle and tracksegment. If the lines do not touch we count them. 
@@ -37,9 +37,9 @@ left join dump as dump2 on
     -- startpoint of second linestring needs to be endpoint of first linestring 
     dump1.path = dump2.path-1 and 
     -- only compare linestrings in same segment
-    dump1.trackseg_id = dump2.trackseg_id
+    dump1.trackseg_id = dump2.trackseg_id and
     -- also it should be an intersection of the same circle: ( see tp.ogc_fid = ci.ogc_fid clause in definition of 'dump' view)
-    dump1.ogc_fid = dump2.ogc_fid and
+    dump1.ogc_fid = dump2.ogc_fid
 group by
 	dump1.ogc_fid,
     dump1.track_id,

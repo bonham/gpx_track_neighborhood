@@ -23,15 +23,19 @@ class ExecuteSQLFile:
 
         return p
 
-    def execFile(self, fname, sqlArgs=[], commit=True):
+    def execFile(self, fname, sqlArgs=[], args=(), commit=True):
 
         fpath = self.fpath(fname)
 
         #print("Execute SQL file {}".format(fpath))
 
         with open(fpath, "r") as f:
-            sql = f.read()
+            sqltemplate = f.read()
+            sql = sqltemplate.format(args)
             self.cursor.execute(sql, sqlArgs)
 
         if commit:
             self.conn.commit()
+
+    def cursor(self):
+        return self.cursor

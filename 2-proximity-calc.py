@@ -2,6 +2,8 @@ import sys
 import argparse
 import os
 import psycopg2
+from gpx2db import Gpx2db, ExecuteSQLFile
+
 
 if sys.version_info < (3, 6):
     raise RuntimeError("You must use python 3.6, You are using python {}.{}.{}".format(
@@ -45,16 +47,17 @@ def main():
     vac(conn_vac, TRACKPOINTS_TABLE)
 
     print("Joining track segments")
-    joinsegments(conn, radius)
+    transform = Transform(conn)
+    transform.joinsegments()
     vac(conn_vac, "newpoints")
     vac(conn_vac, "newsegments")
 
     print("Creating circles from points")
-    create_circles(conn, radius)
+    transform.create_circles(radius)
     vac(conn_vac, "circles")
 
     print("Calculating frequency")
-    calc_frequency(conn)
+    transform.calc_frequency()
     vac(conn_vac, "frequency")
 
 
@@ -106,92 +109,66 @@ def a_parse():
 # --------------------------------
 
 
-def joinsegments(conn, distance):
+class Transform:
 
-    with open('sql/sql_1_joinsegments.sql', "r") as f:
-        sql = f.read()
-        cur = conn.cursor()
-        cur.execute(sql.format(distance))
-        conn.commit()
+    def __init__(self, conn):
 
+        self.conn = conn
+        self.executor = ExecuteSQLFile(conn, relative_dir="sql")
 
-def create_circles(conn, radius):
+    def joinsegments(self):
 
-    with open('sql/sql_2_create_circles.sql', "r") as f:
-        sql = f.read()
-        cur = conn.cursor()
-        print("Execute")
-        cur.execute(sql.format(radius))
-        print("Commit")
-        conn.commit()
-        print("Commit done")
+        self.executor.execFile('sql_1_0_joinsegments.sql')
 
+    def create_circles(self, radius):
 
-def calc_frequency(conn):
+        self.executor.execFile(
+            'sql_2_create_circles.sql',
+            args=(radius)
+        )
 
-    cur = conn.cursor()
+    def calc_frequency(self):
 
-    # create table
-    with open('sql/sql_30_create_freq_tab.sql', "r") as f:
-        sql = f.read()
-        cur.execute(sql)
-        conn.commit()
+        self.executor.execFile('sql_30_create_freq_tab.sql')
 
-    # read list of track ids
-    sql2 = None
+        # read list of track ids
+        self.executor.execFile('sql_31_get_track_fid.sql')
+        tracks = self.executor.cursor().fetchall()
+        num_ids = len(tracks)
 
-    with open('sql/sql_31_get_track_fid.sql', "r") as f:
-        sql2 = f.read()
+        # make intersections for each point
+        for (tid, name, file_path) in tracks:
 
-    cur.execute(sql2)
-    tracks = cur.fetchall()
-    num_ids = len(tracks)
+            print("\n\nTid: {}, Name {}, fpath {}".format(
+                tid, name or "", file_path))
 
-    # make intersections for each point
+            fname = os.path.basename(file_path)
+            print("")
+            print("Intersecting for track id {}/{} {} {}".format(
+                tid,
+                num_ids,
+                str(name),
+                fname))
+            self.printstats(tid)
 
-    sql3 = None
-    with open('sql/sql_32_calcfreq_template.sql', "r") as f3:
-        sql3 = f3.read()
+            self.executor.execFile('sql_32_calcfreq_template.sql', args=(tid))
 
-    for (tid, name, file_path) in tracks:
+    def printstats(self, track_id):
 
-        print("\n\nTid: {}, Name {}, fpath {}".format(
-            tid, name or "", file_path))
+        self.executor.execFile('sql_32_1_intersect_stats.sql', args=(track_id))
+        r = self.executor.cursor().fetchall()
 
-        fname = os.path.basename(file_path)
-        print("")
-        print("Intersecting for track id {}/{} {} {}".format(
-            tid,
-            num_ids,
-            str(name),
-            fname))
-        printstats(conn, tid)
-        tsql = sql3.format(tid)
-        cur.execute(tsql)
-        conn.commit()
+        print("Intersecting with:")
+        print("{:5s} {:30s} {}".format(
+            "# of points",
+            "File",
+            "Track Name"))
+        print("{:5s}+{:30s}+{}".format("-" * 5, "-" * 30, "-" * 30))
 
+        for (numpoints, fpath, tname, intersect_track_id) in r:
 
-def printstats(conn, track_id):
-
-    sqlTempl = None
-    with open('sql/sql_32_1_intersect_stats.sql', "r") as f:
-        sqlTempl = f.read()
-
-    cur = conn.cursor()
-    cur.execute(sqlTempl.format(track_id))
-    r = cur.fetchall()
-
-    print("Intersecting with:")
-    print("{:5s} {:30s} {}".format(
-        "# of points",
-        "File",
-        "Track Name"))
-    print("{:5s}+{:30s}+{}".format("-" * 5, "-" * 30, "-" * 30))
-
-    for (numpoints, fpath, tname, intersect_track_id) in r:
-
-        fname = os.path.basename(fpath)
-        print("{:5d} {:30s} {}".format(numpoints, fname, tname))
+            fname = os.path.basename(fpath)
+            print("{:5d} {:30s} {}".format(numpoints, fname, tname))
 
 
 ###################################################

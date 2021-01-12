@@ -66,15 +66,3 @@ select
 	end as segment_id,
     wkb_geometry
 from base;
-
--- create a view with segments before subsegments are calculated
--- just for debugging purposes
-drop view if exists newpoints_segments;
-create view newpoints_segments as
-select
-	segment_id,
-	track_id,
-	count(ogc_fid),
-	ST_MakeLine(wkb_geometry order by ogc_fid)
-from newpoints
-group by track_id, segment_id

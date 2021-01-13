@@ -1,4 +1,6 @@
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ExecuteSQLFile:
@@ -26,7 +28,9 @@ class ExecuteSQLFile:
 
         with open(fpath, "r") as f:
             sqltemplate = f.read()
-            sql = sqltemplate.format(args)
+            logging.debug("Args: {}".format(args))
+            sql = sqltemplate.format(*args)
+            logging.debug(sql)
             self.cursor().execute(sql, sqlArgs)
 
         if commit:

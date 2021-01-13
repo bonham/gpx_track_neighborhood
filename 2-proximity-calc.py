@@ -2,6 +2,7 @@ import sys
 import argparse
 import os
 import psycopg2
+import logging
 from gpx2db import Gpx2db, ExecuteSQLFile
 
 
@@ -20,7 +21,14 @@ TRACKPOINTS_TABLE = "track_points"
 def main():
 
     # parse args
-    (database_name, host, db_user, password, dbport, radius) = a_parse()
+    (database_name, host, db_user, password, dbport, radius, debug) = a_parse()
+
+    if debug:
+        loglevel = logging.DEBUG
+    else:
+        loglevel = logging.INFO
+
+    logging.basicConfig(level=loglevel)
 
     # connect to db
     conn = psycopg2.connect(
@@ -30,7 +38,6 @@ def main():
             db_user,
             password,
             dbport))
-    cur = conn.cursor()
 
     # connection for vacuum
     conn_vac = psycopg2.connect(
@@ -46,19 +53,30 @@ def main():
     vac(conn_vac, TRACKS_TABLE)
     vac(conn_vac, TRACKPOINTS_TABLE)
 
-    print("Joining track segments")
     transform = Transform(conn)
-    transform.joinsegments()
+
+    print("Create tables and idexes")
+    transform.create_structure()
+    conn.commit()
+
+    print("Joining track segments")
+    transform.joinsegments(1)
     vac(conn_vac, "newpoints")
     vac(conn_vac, "newsegments")
+    conn.commit()
 
     print("Creating circles from points")
-    transform.create_circles(radius)
+    transform.create_circles(radius, 1)
     vac(conn_vac, "circles")
+    conn.commit()
 
-    print("Calculating frequency")
-    transform.calc_frequency()
-    vac(conn_vac, "frequency")
+    print("Perform intersection for track 1")
+    transform.do_intersection(1)
+    conn.commit()
+
+    # print("Calculating frequency")
+    # transform.calc_frequency()
+    # vac(conn_vac, "frequency")
 
 
 # --------------------------------
@@ -95,6 +113,13 @@ def a_parse():
         '--port',
         default='5432',
         help="Database Port")
+    parser.add_argument(
+        '-d',
+        '--debug',
+        action='store_true',
+        help="Enable debug output"
+
+    )
     args = parser.parse_args()
 
     return (
@@ -103,7 +128,8 @@ def a_parse():
         args.user,
         args.password,
         args.port,
-        args.radius
+        args.radius,
+        args.debug
     )
 
 # --------------------------------
@@ -115,27 +141,51 @@ class Transform:
 
         self.conn = conn
 
-        sqldir = os.path.join(os.path.dirname(__file__), 'sql')
+        sqldir = os.path.join(os.path.dirname(
+            __file__), 'sql', 'proximity-calc')
         self.executor = ExecuteSQLFile(conn, base_dir=sqldir)
 
-    def joinsegments(self):
-        self.executor.execFile(
-            'sql_1_0_joinsegments.sql')
-        self.executor.execFile(
-            'sql_1_1_create_view_newpoints_segment_stats.sql')
-        self.executor.execFile(
-            'sql_1_2_create_view_newpoints_w_subsegments.sql')
-        self.executor.execFile(
-            'sql_1_3_create_view_enriched_newpoints_w_subsegments.sql')
-        self.executor.execFile(
-            'sql_1_4_create_newsegments.sql')
-
-    def create_circles(self, radius):
+    def create_structure(self):
 
         self.executor.execFile(
-            'sql_2_create_circles.sql',
-            args=(radius)
+            '0100_create_newpoints_table.sql')
+        self.executor.execFile(
+            '0200_create_segments_table.sql')
+        self.executor.execFile(
+            '0400_create_segments_table_idx.sql')
+        self.executor.execFile(
+            '1000_cr_intersections_table.sql')
+        self.executor.execFile(
+            '1200_create_intersect_table_idx.sql')
+        self.executor.execFile(
+            '1300_create_circles_table.sql')
+
+    def joinsegments(self, track_id):
+
+        self.executor.execFile(
+            '0100_joinsegments_create_newpoints.sql',
+            args=(track_id,))
+
+        self.executor.execFile(
+            '0300_insert_segments.sql',
+            args=(track_id,))
+
+    def create_circles(self, radius, track_id):
+
+        self.executor.execFile(
+            '1310_insert_circles.sql',
+            args=(radius, track_id)
         )
+
+    def do_intersection(self, track_id):
+
+        self.executor.execFile(
+            '2000_identify_intersections.sql',
+            args=(track_id,))
+
+        self.executor.execFile(
+            '2100_create_intersections.sql',
+            args=(track_id,))
 
     def calc_frequency(self):
 

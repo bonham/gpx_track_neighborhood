@@ -3,7 +3,7 @@ import argparse
 import os
 import psycopg2
 import logging
-from gpx2db import Gpx2db, ExecuteSQLFile
+from gpx2db import ExecuteSQLFile
 
 
 if sys.version_info < (3, 6):
@@ -57,22 +57,42 @@ def main():
 
     print("Create tables and idexes")
     transform.create_structure()
-    conn.commit()
 
-    print("Joining track segments")
-    transform.joinsegments(1)
-    vac(conn_vac, "newpoints")
-    vac(conn_vac, "newsegments")
-    conn.commit()
+    # change later and integrate with gpx file loading
+    track_list = transform.get_tracks()
 
-    print("Creating circles from points")
-    transform.create_circles(radius, 1)
-    vac(conn_vac, "circles")
-    conn.commit()
+    for new_track_id in track_list:
 
-    print("Perform intersection for track 1")
-    transform.do_intersection(1)
-    conn.commit()
+        print("Joining track segments")
+        transform.joinsegments(new_track_id)
+        vac(conn_vac, "newpoints")
+        vac(conn_vac, "newsegments")
+
+        all_point_ids = transform.get_point_ids()
+        new_point_ids = transform.get_point_ids(tracks=[new_track_id])
+
+        all_segment_ids = transform.get_segment_ids()
+        new_segment_ids = transform.get_segment_ids([new_track_id])
+
+        print("\n== New track no {} has {} segments and {} points".format(
+            new_track_id,
+            len(new_segment_ids),
+            len(new_point_ids)
+        ))
+        print("Joining with a total of {} segments and {} points".format(
+            len(all_segment_ids),
+            len(all_point_ids)
+        ))
+
+        print("Creating circles from points")
+        transform.create_circles(radius, new_track_id)
+        vac(conn_vac, "circles")
+
+        print("Do intersections")
+        transform.do_intersection(new_track_id)
+
+        print("Count frequencies")
+        transform.count_frequency()
 
     # print("Calculating frequency")
     # transform.calc_frequency()
@@ -80,6 +100,189 @@ def main():
 
 
 # --------------------------------
+
+
+class Transform:
+
+    def __init__(self, conn):
+
+        self.conn = conn
+
+        sqldir = os.path.join(os.path.dirname(
+            __file__), 'sql', 'proximity-calc')
+        self.executor = ExecuteSQLFile(conn, base_dir=sqldir)
+        self.logger = logging.getLogger(__name__)
+
+    def create_structure(self):
+
+        self.executor.execFile(
+            '0100_create_newpoints_table.sql')
+        self.executor.execFile(
+            '0200_create_segments_table.sql')
+        self.executor.execFile(
+            '0400_create_segments_table_idx.sql')
+        self.executor.execFile(
+            '1000_cr_intersections_table.sql')
+        self.executor.execFile(
+            '1200_create_intersect_table_idx.sql')
+        self.executor.execFile(
+            '1300_create_circles_table.sql')
+        self.executor.execFile(
+            '3000_view_gtype.sql')
+        self.executor.execFile(
+            '3100_view_ml_debug.sql')
+        self.executor.execFile(
+            '3200_view_count_ml_consecutive.sql')
+        self.executor.execFile(
+            '3300_view_count_linestrings.sql')
+        self.executor.execFile(
+            '3400_view_count_circle_freq.sql')
+
+    def joinsegments(self, track_id):
+
+        self.executor.execFile(
+            '0100_joinsegments_create_newpoints.sql',
+            args=(track_id,))
+
+        self.executor.execFile(
+            '0300_insert_segments.sql',
+            args=(track_id,))
+
+    def create_circles(self, radius, track_id):
+
+        self.executor.execFile(
+            '1310_insert_circles.sql',
+            args=(radius, track_id)
+        )
+
+    def do_intersection(self, new_track_id):
+
+        where_new_points = "and np.track_id = {}".format(
+            new_track_id
+        )
+        # all existing segments (including new ones) with circles of new track
+        self.logger.info("... calc for new track")
+        self.executor.execFile(
+            '2000_insert_intersections.sql',
+            args=(
+                where_new_points,
+            )
+        )
+
+        # all existing circles (excluding new ones) with segments of new track
+        self.logger.info("... calc for existing tracks")
+        where_new_segments = \
+            " and se.track_id = {} and np.track_id != {}".format(
+                new_track_id,
+                new_track_id)
+        self.executor.execFile(
+            '2000_insert_intersections.sql',
+            args=(
+                where_new_segments,
+            )
+        )
+
+    def count_frequency(self):
+        cur = self.conn.cursor()
+        cur.execute('select * from count_circle_freq_all')
+        r = cur.fetchall()
+        return r
+
+    def calc_frequency(self):
+
+        self.executor.execFile('sql_30_create_freq_tab.sql')
+
+        # read list of track ids
+        self.executor.execFile('sql_31_get_track_fid.sql')
+        tracks = self.executor.cursor().fetchall()
+        num_ids = len(tracks)
+
+        # make intersections for each point
+        for (tid, name, file_path) in tracks:
+
+            print("\n\nTid: {}, Name {}, fpath {}".format(
+                tid, name or "", file_path))
+
+            fname = os.path.basename(file_path)
+            print("")
+            print("Intersecting for track id {}/{} {} {}".format(
+                tid,
+                num_ids,
+                str(name),
+                fname))
+            self.printstats(tid)
+
+            self.executor.execFile(
+                'sql_32_calcfreq_template.sql', args=(tid))
+
+    def printstats(self, track_id):
+
+        self.executor.execFile(
+            'sql_32_1_intersect_stats.sql', args=(track_id))
+        r = self.executor.cursor().fetchall()
+
+        print("Intersecting with:")
+        print("{:5s} {:30s} {}".format(
+            "# of points",
+            "File",
+            "Track Name"))
+        print("{:5s}+{:30s}+{}".format("-" * 5, "-" * 30, "-" * 30))
+
+        for (numpoints, fpath, tname, intersect_track_id) in r:
+
+            fname = os.path.basename(fpath)
+            print("{:5d} {:30s} {}".format(numpoints, fname, tname))
+
+    def get_segment_ids(self, tracks=[]):
+        "Get segment ids for all or given track"
+
+        cur = self.conn.cursor()
+
+        sql = "select segment_id from newsegments "
+        if tracks:
+            sql += "where track_id " + self.in_clause(tracks)
+
+        cur.execute(sql)
+        r = cur.fetchall()
+        segment_id_list = [x[0] for x in r]
+
+        return segment_id_list
+
+    def get_point_ids(self, tracks=[]):
+        "Get point ids for all or given tracks"
+
+        cur = self.conn.cursor()
+
+        sql = "select point_id from newpoints"
+
+        if tracks:
+            sql += " where track_id " + self.in_clause(tracks)
+
+        cur.execute(sql)
+        r = cur.fetchall()
+        point_id_list = [x[0] for x in r]
+
+        return point_id_list
+
+    def get_tracks(self):
+        "Get all track ids"
+
+        cur = self.conn.cursor()
+
+        sql = "select id from tracks order by id"
+        cur.execute(sql)
+        r = cur.fetchall()
+        track_id_list = [x[0] for x in r]
+        return track_id_list
+
+    def in_clause(self, values_list):
+
+        # convert to strings
+        values_list = map(str, values_list)
+
+        r = "IN (" + ",".join(values_list) + ")"
+        return r
+
 
 def vac(conn, table):
     cur = conn.cursor()
@@ -133,102 +336,6 @@ def a_parse():
     )
 
 # --------------------------------
-
-
-class Transform:
-
-    def __init__(self, conn):
-
-        self.conn = conn
-
-        sqldir = os.path.join(os.path.dirname(
-            __file__), 'sql', 'proximity-calc')
-        self.executor = ExecuteSQLFile(conn, base_dir=sqldir)
-
-    def create_structure(self):
-
-        self.executor.execFile(
-            '0100_create_newpoints_table.sql')
-        self.executor.execFile(
-            '0200_create_segments_table.sql')
-        self.executor.execFile(
-            '0400_create_segments_table_idx.sql')
-        self.executor.execFile(
-            '1000_cr_intersections_table.sql')
-        self.executor.execFile(
-            '1200_create_intersect_table_idx.sql')
-        self.executor.execFile(
-            '1300_create_circles_table.sql')
-
-    def joinsegments(self, track_id):
-
-        self.executor.execFile(
-            '0100_joinsegments_create_newpoints.sql',
-            args=(track_id,))
-
-        self.executor.execFile(
-            '0300_insert_segments.sql',
-            args=(track_id,))
-
-    def create_circles(self, radius, track_id):
-
-        self.executor.execFile(
-            '1310_insert_circles.sql',
-            args=(radius, track_id)
-        )
-
-    def do_intersection(self, track_id):
-
-        self.executor.execFile(
-            '2000_identify_intersections.sql',
-            args=(track_id,))
-
-        self.executor.execFile(
-            '2100_create_intersections.sql',
-            args=(track_id,))
-
-    def calc_frequency(self):
-
-        self.executor.execFile('sql_30_create_freq_tab.sql')
-
-        # read list of track ids
-        self.executor.execFile('sql_31_get_track_fid.sql')
-        tracks = self.executor.cursor().fetchall()
-        num_ids = len(tracks)
-
-        # make intersections for each point
-        for (tid, name, file_path) in tracks:
-
-            print("\n\nTid: {}, Name {}, fpath {}".format(
-                tid, name or "", file_path))
-
-            fname = os.path.basename(file_path)
-            print("")
-            print("Intersecting for track id {}/{} {} {}".format(
-                tid,
-                num_ids,
-                str(name),
-                fname))
-            self.printstats(tid)
-
-            self.executor.execFile('sql_32_calcfreq_template.sql', args=(tid))
-
-    def printstats(self, track_id):
-
-        self.executor.execFile('sql_32_1_intersect_stats.sql', args=(track_id))
-        r = self.executor.cursor().fetchall()
-
-        print("Intersecting with:")
-        print("{:5s} {:30s} {}".format(
-            "# of points",
-            "File",
-            "Track Name"))
-        print("{:5s}+{:30s}+{}".format("-" * 5, "-" * 30, "-" * 30))
-
-        for (numpoints, fpath, tname, intersect_track_id) in r:
-
-            fname = os.path.basename(fpath)
-            print("{:5d} {:30s} {}".format(numpoints, fname, tname))
 
 
 ###################################################

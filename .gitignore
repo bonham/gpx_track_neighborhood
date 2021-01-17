@@ -1,9 +1,11 @@
 *~
 *.swp
 qgis
+qgis3
 tracks
 venv
 *.egg-info
 __pycache__
 .pytest_cache
 *.prof
+.vscode/launch.json

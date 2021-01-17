@@ -1,7 +1,6 @@
 import os
 import psycopg2 as pg2
 import gpxpy
-from .utils import ExecuteSQLFile
 from .gpx2dblib import Gpx2db
 
 PG_ADMIN_DB = "postgres"
@@ -22,9 +21,6 @@ def gpximport(
             dbport))
     conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
-
-    sqldir = os.path.join(os.path.dirname(__file__), 'sql')
-    ExecuteSQLFile(conn, base_dir=sqldir)
 
     g2d = Gpx2db(conn)
 

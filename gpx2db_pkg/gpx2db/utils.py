@@ -24,8 +24,6 @@ class ExecuteSQLFile:
 
         fpath = self.fpath(fname)
 
-        #print("Execute SQL file {}".format(fpath))
-
         with open(fpath, "r") as f:
             sqltemplate = f.read()
             logging.debug("Args: {}".format(args))
@@ -39,7 +37,7 @@ class ExecuteSQLFile:
     def cursor(self):
         return self.cur
 
+
 def vac(conn, table):
     cur = conn.cursor()
     cur.execute("vacuum analyze {}".format(table))
-

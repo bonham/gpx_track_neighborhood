@@ -1,12 +1,9 @@
 import sys
 import argparse
-import glob
 import os
-import subprocess
 import psycopg2
 import json
 import shutil
-import json
 
 if sys.version_info < (3, 6):
     raise RuntimeError("You must use python 3.6, You are using python {}.{}.{}".format(

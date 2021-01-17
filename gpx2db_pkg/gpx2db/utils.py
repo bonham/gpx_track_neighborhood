@@ -1,5 +1,6 @@
 import os
 import logging
+import glob
 logger = logging.getLogger(__name__)
 
 
@@ -41,3 +42,12 @@ class ExecuteSQLFile:
 def vac(conn, table):
     cur = conn.cursor()
     cur.execute("vacuum analyze {}".format(table))
+
+
+def getfiles(directory):
+
+    normdir = os.path.abspath(directory)
+    globexp = os.path.join(normdir, "*.gpx")
+    dirs = glob.glob(globexp)
+
+    return dirs

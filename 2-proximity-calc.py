@@ -1,17 +1,12 @@
-import sys
 import argparse
 import psycopg2
 import logging
-from gpx2db import vac
+from gpx2db import vac, getfiles
 from gpx2db.proximity_calc import Transform
+from gpx2db.gpximport import gpximport
 
-if sys.version_info < (3, 6):
-    raise RuntimeError(
-        "You must use python 3.6, You are using python {}.{}.{}".format(
-            *sys.version_info[0:3]))
 
 # constants
-
 PG_USER = "postgres"
 RADIUS_DEFAULT = 30
 TRACKS_TABLE = "tracks"
@@ -21,7 +16,16 @@ TRACKPOINTS_TABLE = "track_points"
 def main():
 
     # parse args
-    (database_name, host, db_user, password, dbport, radius, debug) = a_parse()
+    (
+        directory,
+        database_name,
+        host,
+        db_user,
+        password,
+        dbport,
+        radius,
+        delete_db,
+        debug) = a_parse()
 
     if debug:
         loglevel = logging.DEBUG
@@ -29,6 +33,18 @@ def main():
         loglevel = logging.INFO
 
     logging.basicConfig(level=loglevel)
+
+    # get gpx filenames
+    gpx_filelist = getfiles(directory)
+    print("Number of gpx files: {}".format(len(gpx_filelist)))
+
+    if delete_db:
+        print("(Re-) creating database {}".format(database_name))
+    else:
+        print("Appending to database {}".format(database_name))
+
+    gpximport(gpx_filelist, database_name, delete_db,
+              host, db_user, password, dbport)
 
     # connect to db
     conn = psycopg2.connect(
@@ -100,8 +116,9 @@ def main():
 def a_parse():
     parser = argparse.ArgumentParser(
         description=(
-            'Load GPX files in specified directory into postgis database'
+            'Load GPX files from specified directory into postgis database'
         ))
+    parser.add_argument('source_directory')
     parser.add_argument('database')
     parser.add_argument(
         '--radius',
@@ -131,6 +148,12 @@ def a_parse():
         default='5432',
         help="Database Port")
     parser.add_argument(
+        '--createdb',
+        action='store_true',
+        help=(
+            "Create the database. If it does already exist, "
+            "the old db will be overwritten!"))
+    parser.add_argument(
         '-d',
         '--debug',
         action='store_true',
@@ -140,12 +163,14 @@ def a_parse():
     args = parser.parse_args()
 
     return (
+        args.source_directory,
         args.database,
         args.host,
         args.user,
         args.password,
         args.port,
         args.radius,
+        args.createdb,
         args.debug
     )
 

@@ -91,8 +91,8 @@ def main():
         print("Do intersections")
         transform.do_intersection(new_track_id)
 
-        print("Count frequencies")
-        transform.count_frequency()
+    print("\nCalculating categories")
+    transform.calc_categories()
 
 # --------------------------------
 

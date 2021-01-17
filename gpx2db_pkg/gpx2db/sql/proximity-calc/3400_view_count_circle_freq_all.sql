@@ -2,7 +2,7 @@ drop view if exists count_circle_freq_all;
 create view count_circle_freq_all as
 SELECT
   circle_id,
-  count(num) as num
+  count(num) as freq
 from (
   select *
   from count_ls

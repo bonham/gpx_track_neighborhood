@@ -1,29 +1,19 @@
 -- create table
 DROP INDEX if exists track_segment_freq_categories_wkb_geometry_geom_idx;
-DROP TABLE if exists public.track_segment_freq_categories;
+DROP TABLE if exists track_segment_freq_categories;
 
-CREATE TABLE public.track_segment_freq_categories
+CREATE TABLE track_segment_freq_categories
 (
-    category_segment integer not null,
+    category_segment integer primary key,
     freq integer NOT NULL,
     category integer,
-    wkb_geometry geometry(MultiLineString,4326),
-    CONSTRAINT track_segment_freq_categories_pk PRIMARY KEY (category_segment)
-)
-WITH (
-    OIDS = FALSE
-)
-TABLESPACE pg_default;
-
-ALTER TABLE public.track_segment_freq_categories
-    OWNER to postgres;
+    wkb_geometry geometry(MultiLineString,4326)
+);
 
 CREATE INDEX track_segment_freq_categories_wkb_geometry_geom_idx
-    ON public.track_segment_freq_categories USING gist
-    (wkb_geometry)
-    TABLESPACE pg_default;
-
-create index track_segment_freq_categories_catseg on track_segment_freq_categories(freq);
+    ON track_segment_freq_categories USING gist (wkb_geometry);
+create index track_segment_freq_categories_catseg
+    on track_segment_freq_categories(freq);
 
 -- Create strings for each segment and insert it into table
 
@@ -34,14 +24,14 @@ select
     fl.category_segment,
     fl.freq,
     null,
-    ST_Multi(ST_Linemerge(ST_Collect(ST_MakeLine(tp1.wkb_geometry, tp2.wkb_geometry))))
+    ST_Multi(ST_Linemerge(ST_Collect(ST_MakeLine(np1.wkb_geometry, np2.wkb_geometry))))
 from
 	frequency_lines fl,
-    newpoints tp1,
-    newpoints tp2
+    newpoints np1,
+    newpoints np2
 where
-	tp1.ogc_fid = fl.ogc_fid_start  and
-    tp2.ogc_fid = fl.ogc_fid_end
+	np1.point_id = fl.point_id_start  and
+    np2.point_id = fl.point_id_end
 group by fl.category_segment, fl.freq
 order by fl.category_segment, fl.freq
 );

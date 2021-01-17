@@ -83,11 +83,10 @@ class Transform:
             )
         )
 
-    def count_frequency(self):
-        cur = self.conn.cursor()
-        cur.execute('select * from count_circle_freq_all')
-        r = cur.fetchall()
-        return r
+    def calc_categories(self):
+
+        self.executor.execFile('4000_calc_categories.sql')
+        self.executor.execFile('4100_create_category_table.sql')
 
     def get_segment_ids(self, tracks=[]):
         "Get segment ids for all or given track"

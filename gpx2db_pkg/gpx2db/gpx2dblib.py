@@ -172,7 +172,10 @@ class Gpx2db:
 
     def store_points(self, storelist):
 
-        sql = "insert into {} (track_id, track_segment_id, segment_point_id, wkb_geometry) values ".format(
+        sql = (
+            "insert into {} "
+            "  (track_id, track_segment_id, segment_point_id, wkb_geometry) "
+            "  values ").format(
             self.track_points_table
         )
 
@@ -202,7 +205,7 @@ class Gpx2db:
 
         sql = """
             with base as (
-                select ST_MakeLine(wkb_geometry order by id) as wkb_geometry 
+                select ST_MakeLine(wkb_geometry order by id) as wkb_geometry
                 from track_points where track_id = {0}
             )
             update tracks set wkb_geometry = subquery.wkb_geometry from (

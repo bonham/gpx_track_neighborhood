@@ -38,3 +38,8 @@ class ExecuteSQLFile:
 
     def cursor(self):
         return self.cur
+
+def vac(conn, table):
+    cur = conn.cursor()
+    cur.execute("vacuum analyze {}".format(table))
+

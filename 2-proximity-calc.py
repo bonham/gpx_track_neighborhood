@@ -3,12 +3,13 @@ import argparse
 import os
 import psycopg2
 import logging
-from gpx2db import ExecuteSQLFile
+from gpx2db import ExecuteSQLFile, vac
 
 
 if sys.version_info < (3, 6):
-    raise RuntimeError("You must use python 3.6, You are using python {}.{}.{}".format(
-        *sys.version_info[0:3]))
+    raise RuntimeError(
+        "You must use python 3.6, You are using python {}.{}.{}".format(
+            *sys.version_info[0:3]))
 
 # constants
 
@@ -49,7 +50,7 @@ def main():
             dbport))
 
     conn_vac.set_isolation_level(
-        psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
     vac(conn_vac, TRACKS_TABLE)
     vac(conn_vac, TRACKPOINTS_TABLE)
 
@@ -188,51 +189,6 @@ class Transform:
         r = cur.fetchall()
         return r
 
-    def calc_frequency(self):
-
-        self.executor.execFile('sql_30_create_freq_tab.sql')
-
-        # read list of track ids
-        self.executor.execFile('sql_31_get_track_fid.sql')
-        tracks = self.executor.cursor().fetchall()
-        num_ids = len(tracks)
-
-        # make intersections for each point
-        for (tid, name, file_path) in tracks:
-
-            print("\n\nTid: {}, Name {}, fpath {}".format(
-                tid, name or "", file_path))
-
-            fname = os.path.basename(file_path)
-            print("")
-            print("Intersecting for track id {}/{} {} {}".format(
-                tid,
-                num_ids,
-                str(name),
-                fname))
-            self.printstats(tid)
-
-            self.executor.execFile(
-                'sql_32_calcfreq_template.sql', args=(tid))
-
-    def printstats(self, track_id):
-
-        self.executor.execFile(
-            'sql_32_1_intersect_stats.sql', args=(track_id))
-        r = self.executor.cursor().fetchall()
-
-        print("Intersecting with:")
-        print("{:5s} {:30s} {}".format(
-            "# of points",
-            "File",
-            "Track Name"))
-        print("{:5s}+{:30s}+{}".format("-" * 5, "-" * 30, "-" * 30))
-
-        for (numpoints, fpath, tname, intersect_track_id) in r:
-
-            fname = os.path.basename(fpath)
-            print("{:5d} {:30s} {}".format(numpoints, fname, tname))
-
     def get_segment_ids(self, tracks=[]):
         "Get segment ids for all or given track"
 
@@ -284,18 +240,19 @@ class Transform:
         return r
 
 
-def vac(conn, table):
-    cur = conn.cursor()
-    cur.execute("vacuum analyze {}".format(table))
-
-
 def a_parse():
     parser = argparse.ArgumentParser(
-        description='Load GPX files in specified directory into postgis database'
-    )
+        description=(
+            'Load GPX files in specified directory into postgis database'
+        ))
     parser.add_argument('database')
-    parser.add_argument('--radius', help="Radius in meters around a trackpoint, where we search for nearby tracks. Default is {}m".format(
-        RADIUS_DEFAULT), default=RADIUS_DEFAULT)
+    parser.add_argument(
+        '--radius',
+        help=(
+            "Radius in meters around a trackpoint, "
+            "where we search for nearby tracks. "
+            "Default is {}m").format(
+            RADIUS_DEFAULT), default=RADIUS_DEFAULT)
 
     parser.add_argument(
         '-n',

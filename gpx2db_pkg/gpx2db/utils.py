@@ -1,7 +1,11 @@
 import os
 import logging
 import glob
+import psycopg2 as pg2
 logger = logging.getLogger(__name__)
+
+PG_ADMIN_DB = 'postgres'
+PG_ADMIN_DB_USER = 'postgres'
 
 
 class ExecuteSQLFile:
@@ -51,3 +55,27 @@ def getfiles(directory):
     dirs = glob.glob(globexp)
 
     return dirs
+
+
+def drop_db(database_name_to_drop, admin_db_password, host='localhost', dbport=5432):
+
+    # connect to system database 'postgres' first
+    sysDBconn = pg2.connect(
+        "dbname={} host={} user={} password={} port={}".format(
+            PG_ADMIN_DB,
+            host,
+            PG_ADMIN_DB_USER,
+            admin_db_password,
+            dbport))
+    sysDBconn.set_isolation_level(
+        pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
+
+    sysDBcur = sysDBconn.cursor()
+
+    # sql setup
+    sql1 = "drop database if exists {0}".format(database_name_to_drop)
+    sql2 = "create database {0}".format(database_name_to_drop)
+
+    sysDBcur.execute(sql1)
+    sysDBcur.execute(sql2)
+    sysDBconn.close()

@@ -2,6 +2,7 @@ import argparse
 import psycopg2
 import logging
 from gpx2db import vac, getfiles
+from gpx2db.utils import drop_db
 from gpx2db.proximity_calc import Transform
 from gpx2db.gpximport import gpximport
 
@@ -42,6 +43,9 @@ def main():
         print("(Re-) creating database {}".format(database_name))
     else:
         print("Appending to database {}".format(database_name))
+
+    if delete_db:
+        drop_db(database_name, password)
 
     gpximport(gpx_filelist, database_name, delete_db,
               host, db_user, password, dbport)

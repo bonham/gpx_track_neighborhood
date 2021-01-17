@@ -8,30 +8,9 @@ PG_ADMIN_DB = "postgres"
 PG_ADMIN_DB_USER = "postgres"
 
 
-def gpximport(filelist, database_name, delete_mode, host, db_user, password, dbport):
-
-    if delete_mode:
-
-        # connect to system database 'postgres' first
-        sysDBconn = pg2.connect(
-            "dbname={} host={} user={} password={} port={}".format(
-                PG_ADMIN_DB,
-                host,
-                PG_ADMIN_DB_USER,
-                password,
-                dbport))
-        sysDBconn.set_isolation_level(
-            pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
-
-        sysDBcur = sysDBconn.cursor()
-
-        # sql setup
-        sql1 = "drop database if exists {0}".format(database_name)
-        sql2 = "create database {0}".format(database_name)
-
-        sysDBcur.execute(sql1)
-        sysDBcur.execute(sql2)
-        sysDBconn.close()
+def gpximport(
+        filelist, database_name, delete_mode,
+        host, db_user, password, dbport):
 
     # connect to newly created db
     conn = pg2.connect(
@@ -43,11 +22,13 @@ def gpximport(filelist, database_name, delete_mode, host, db_user, password, dbp
             dbport))
     conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
+
     sqldir = os.path.join(os.path.dirname(__file__), 'sql')
     ExecuteSQLFile(conn, base_dir=sqldir)
 
     g2d = Gpx2db(conn)
 
+    # TODO: move database initialization up
     if delete_mode:
         g2d.init_db(drop=True)
 

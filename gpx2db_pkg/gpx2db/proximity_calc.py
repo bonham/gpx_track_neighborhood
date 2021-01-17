@@ -37,7 +37,7 @@ class Transform:
         self.executor.execFile(
             '3300_view_count_linestrings.sql')
         self.executor.execFile(
-            '3400_view_count_circle_freq.sql')
+            '3400_view_count_circle_freq_all.sql')
 
     def joinsegments(self, track_id):
 

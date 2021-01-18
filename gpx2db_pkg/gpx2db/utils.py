@@ -48,13 +48,19 @@ def vac(conn, table):
     cur.execute("vacuum analyze {}".format(table))
 
 
-def getfiles(directory):
+def getfiles(dir_or_file):
 
-    normdir = os.path.abspath(directory)
-    globexp = os.path.join(normdir, "*.gpx")
-    dirs = glob.glob(globexp)
+    if os.path.isfile(dir_or_file):
+        fname = dir_or_file
+        return [fname]
 
-    return dirs
+    else:
+        directory = dir_or_file
+        normdir = os.path.abspath(directory)
+        globexp = os.path.join(normdir, "*.gpx")
+        filelist = glob.glob(globexp)
+
+        return filelist
 
 
 def drop_db(database_name_to_drop, admin_db_password, host='localhost', dbport=5432):

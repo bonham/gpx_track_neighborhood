@@ -30,6 +30,7 @@ class Gpx2db:
             id integer PRIMARY KEY,
             name varchar(2000),
             src varchar(2000),
+            hash varchar(64),
             wkb_geometry geometry(MultiLineString,4326)
             )
         """.format(
@@ -121,12 +122,14 @@ class Gpx2db:
         row = self.cur.fetchone()
         return row[0]
 
-    def load_gpx_file(self, gpx, src=None):
+    def load_gpx_file(self, gpx, hash, src=None):
 
+        track_ids_created = []
         for track in gpx.tracks:
 
             track_id = self.get_nextval(self.tracks_id_sequence)
-            self.store_track(track, track_id, src)
+            track_ids_created.append(track_id)
+            self.store_track(track, track_id, hash, src)
 
             for segnum, segment in enumerate(track.segments):
 
@@ -146,6 +149,7 @@ class Gpx2db:
 
             self.track_update_geometry(track_id)
             self.commit()
+        return track_ids_created
 
     def store_segment(self, track_id, segment_num):
         sql = "insert into {} values ({},{})".format(
@@ -155,17 +159,18 @@ class Gpx2db:
         )
         self.cur.execute(sql)
 
-    def store_track(self, track, rowid, src=None):
+    def store_track(self, track, rowid, hash, src=None):
 
         name = track.name
 
         sql = """
-            insert into {} (id, name, src)
-            values({},'{}','{}')
+            insert into {} (id, name, hash, src)
+            values({},'{}','{}','{}')
         """.format(
             self.tracks_table,
             rowid,
             name,
+            hash,
             src
         )
         self.cur.execute(sql)

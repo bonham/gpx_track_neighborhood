@@ -1,10 +1,10 @@
 import argparse
-import psycopg2
+import psycopg2 as pg2
 import logging
-from gpx2db import vac, getfiles
+from gpx2db import vac, getfiles, Gpx2db
 from gpx2db.utils import drop_db
 from gpx2db.proximity_calc import Transform
-from gpx2db.gpximport import gpximport
+from gpx2db.gpximport import GpxImport
 
 
 # constants
@@ -18,7 +18,7 @@ def main():
 
     # parse args
     (
-        directory,
+        dir_or_file,
         database_name,
         host,
         db_user,
@@ -36,7 +36,7 @@ def main():
     logging.basicConfig(level=loglevel)
 
     # get gpx filenames
-    gpx_filelist = getfiles(directory)
+    gpx_filelist = getfiles(dir_or_file)
     print("Number of gpx files: {}".format(len(gpx_filelist)))
 
     if delete_db:
@@ -47,20 +47,27 @@ def main():
     if delete_db:
         drop_db(database_name, password)
 
-    gpximport(gpx_filelist, database_name, delete_db,
-              host, db_user, password, dbport)
-
-    # connect to db
-    conn = psycopg2.connect(
+#    gpximport(gpx_filelist, database_name, delete_db,
+#              host, db_user, password, dbport)
+    # connect to newly created db
+    conn = pg2.connect(
         "dbname={} host={} user={} password={} port={}".format(
             database_name,
             host,
             db_user,
             password,
             dbport))
+    conn.set_isolation_level(
+        pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
+
+    g2d = Gpx2db(conn)
+
+    # TODO: move database initialization up
+    if delete_db:
+        g2d.init_db(drop=True)
 
     # connection for vacuum
-    conn_vac = psycopg2.connect(
+    conn_vac = pg2.connect(
         "dbname={} host={} user={} password={} port={}".format(
             database_name,
             host,
@@ -69,7 +76,7 @@ def main():
             dbport))
 
     conn_vac.set_isolation_level(
-        psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
+        pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
     vac(conn_vac, TRACKS_TABLE)
     vac(conn_vac, TRACKPOINTS_TABLE)
 
@@ -78,41 +85,44 @@ def main():
     print("Create tables and idexes")
     transform.create_structure()
 
-    # change later and integrate with gpx file loading
-    track_list = transform.get_tracks()
+    # Loop over files and import
+    gpximp = GpxImport(conn)
+    for fname in gpx_filelist:
 
-    for new_track_id in track_list:
+        track_ids_created = gpximp.import_gpx_file(fname)
 
-        print("Joining track segments")
-        transform.joinsegments(new_track_id)
-        vac(conn_vac, "newpoints")
-        vac(conn_vac, "newsegments")
+        for new_track_id in track_ids_created:
 
-        all_point_ids = transform.get_point_ids()
-        new_point_ids = transform.get_point_ids(tracks=[new_track_id])
+            print("Joining track segments")
+            transform.joinsegments(new_track_id)
+            vac(conn_vac, "newpoints")
+            vac(conn_vac, "newsegments")
 
-        all_segment_ids = transform.get_segment_ids()
-        new_segment_ids = transform.get_segment_ids([new_track_id])
+            all_point_ids = transform.get_point_ids()
+            new_point_ids = transform.get_point_ids(tracks=[new_track_id])
 
-        print("\n== New track no {} has {} segments and {} points".format(
-            new_track_id,
-            len(new_segment_ids),
-            len(new_point_ids)
-        ))
-        print("Joining with a total of {} segments and {} points".format(
-            len(all_segment_ids),
-            len(all_point_ids)
-        ))
+            all_segment_ids = transform.get_segment_ids()
+            new_segment_ids = transform.get_segment_ids([new_track_id])
 
-        print("Creating circles from points")
-        transform.create_circles(radius, new_track_id)
-        vac(conn_vac, "circles")
+            print("\n== New track no {} has {} segments and {} points".format(
+                new_track_id,
+                len(new_segment_ids),
+                len(new_point_ids)
+            ))
+            print("Joining with a total of {} segments and {} points".format(
+                len(all_segment_ids),
+                len(all_point_ids)
+            ))
 
-        print("Do intersections")
-        transform.do_intersection(new_track_id)
+            print("Creating circles from points")
+            transform.create_circles(radius, new_track_id)
+            vac(conn_vac, "circles")
 
-    print("\nCalculating categories")
-    transform.calc_categories()
+            print("Do intersections")
+            transform.do_intersection(new_track_id)
+
+        print("\nCalculating categories")
+        transform.calc_categories()
 
 # --------------------------------
 
@@ -122,7 +132,8 @@ def a_parse():
         description=(
             'Load GPX files from specified directory into postgis database'
         ))
-    parser.add_argument('source_directory')
+    parser.add_argument('dir_or_file',
+                        help="GPX file or directory of GPX files")
     parser.add_argument('database')
     parser.add_argument(
         '--radius',
@@ -167,7 +178,7 @@ def a_parse():
     args = parser.parse_args()
 
     return (
-        args.source_directory,
+        args.dir_or_file,
         args.database,
         args.host,
         args.user,

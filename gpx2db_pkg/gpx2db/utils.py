@@ -63,7 +63,9 @@ def getfiles(dir_or_file):
         return filelist
 
 
-def drop_db(database_name_to_drop, admin_db_password, host='localhost', dbport=5432):
+def drop_db(
+        database_name_to_drop, admin_db_password,
+        host='localhost', dbport=5432):
 
     # connect to system database 'postgres' first
     sysDBconn = pg2.connect(
@@ -85,3 +87,24 @@ def drop_db(database_name_to_drop, admin_db_password, host='localhost', dbport=5
     sysDBcur.execute(sql1)
     sysDBcur.execute(sql2)
     sysDBconn.close()
+
+
+def setup_logging(debug):
+
+    if debug:
+        loglevel = logging.DEBUG
+        fmt = '%(asctime)-15s - %(filename)s %(lineno)d - %(levelname)s - %(message)s'
+
+    else:
+        loglevel = logging.INFO
+        fmt = '%(levelname)-7s: %(message)s'
+
+    logger = logging.getLogger()
+    logger.setLevel(loglevel)
+
+    ch = logging.StreamHandler()
+    ch.setFormatter(logging.Formatter(fmt))
+
+    logger.addHandler(ch)
+
+    return logger

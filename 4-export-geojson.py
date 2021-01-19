@@ -1,26 +1,29 @@
-import sys
 import argparse
 import os
 import psycopg2
 import json
 import shutil
-
-if sys.version_info < (3, 6):
-    raise RuntimeError("You must use python 3.6, You are using python {}.{}.{}".format(
-        *sys.version_info[0:3]))
+from gpx2db.utils import setup_logging
 
 # constants
-
 PG_USER = "postgres"
 METADATA_FNAME = "datasets.json"
 BASEDIR = os.path.normpath("html/static/geojson")
 MAXCATEGORIES = 5
 
+logger = None
+
 
 def main():
 
     # parse args
-    (database_name, host, db_user, password, dbport, outputDir, mode) = a_parse()
+    (
+        database_name, host, db_user,
+        password, dbport, outputDir, mode, debug
+    ) = a_parse()
+
+    global logger
+    logger = setup_logging(debug)
 
     # connect to db
     conn = psycopg2.connect(
@@ -51,19 +54,24 @@ def main():
 
     # print categories
     for item in categoryList:
-        print(
-            "Category {}: {:3} - {:3}".format(item["category"], item["min"], item["max"]))
+        logger.info(
+            "Category {}: {:3} - {:3}".format(
+                item["category"], item["min"], item["max"]))
 
     writeGeoJsonFiles(geometryList, geodir)
 
     numTrackFilePath = os.path.join(geodir, "numberOfTracks.json")
-    writeNumTracksFile(numTrackFilePath, len(geometryList))
+    writeNumTracksFile(
+        numTrackFilePath, len(geometryList))
 
 
 # --------------------------------
 def a_parse():
     parser = argparse.ArgumentParser(
-        description='Write gpx tracks as geojson to disk. The output directory will be "html/static/geojson/<dataset_label>/'
+        description=(
+            'Write gpx tracks as geojson to disk. '
+            'The output directory will be '
+            '"html/static/geojson/<dataset_label>/"')
     )
     parser.add_argument('database')
     parser.add_argument(
@@ -82,20 +90,29 @@ def a_parse():
         default='',
         help="Database Password")
     parser.add_argument(
-        'dataset_label', help="This should be a unique label of your gpx set. E.g '2019'")
+        'dataset_label',
+        help="This should be a unique label of your gpx set. E.g '2019'")
     parser.add_argument(
         '-m',
         default="category",
         type=str,
         choices=('category', 'plain'),
-        help="Extraction mode. Possible values: category|plain. If you omit the flag, the default is category")
+        help=("Extraction mode. Possible values: "
+              "category|plain. If you omit the flag, the default is category"))
     parser.add_argument(
         '--port',
         default='5432',
         help="Database Port")
+
+    parser.add_argument(
+        '-d',
+        '--debug',
+        action='store_true',
+        help="Enable debug output"
+    )
+
     args = parser.parse_args()
 
-    print("Mode is {}".format(args.m))
     return (
         args.database,
         args.host,
@@ -103,14 +120,15 @@ def a_parse():
         args.password,
         args.port,
         args.dataset_label,
-        args.m
+        args.m,
+        args.debug
     )
 
 
 def cleanup(geodir):
 
     # remove directory if exists
-    print("Removing {}".format(geodir))
+    logger.info("Removing {}".format(geodir))
     if os.path.exists(geodir) and os.path.isdir(geodir):
         shutil.rmtree(geodir)
 
@@ -134,13 +152,13 @@ def create_extend_metadata(directory, filename, label):
 
     # Insert label at beginning of list if not in list
     if label not in mdata:
-        print("Adding {} to {}".format(label, fpath))
+        logger.info("Adding {} to {}".format(label, fpath))
         mdata.insert(0, label)
     else:
-        print("Label {} is already in {}".format(label, fpath))
+        logger.info("Label {} is already in {}".format(label, fpath))
 
     # write file
-    print("Writing {}".format(fpath))
+    logger.info("Writing {}".format(fpath))
     with open(fpath, 'w') as fp:
         json.dump(mdata, fp)
 
@@ -148,7 +166,10 @@ def create_extend_metadata(directory, filename, label):
 def queryCategoryMode(cur):
 
     # read geojson
-    cur.execute("select category, ST_AsGeoJSON(ST_Collect(wkb_geometry)), min(freq), max(freq) from track_segment_freq_categories group by category order by category")
+    cur.execute((
+        "select category, ST_AsGeoJSON(ST_Collect(wkb_geometry)),"
+        " min(freq), max(freq) from track_segment_freq_categories "
+        "group by category order by category"))
     r = cur.fetchall()
 
     geometryList = []
@@ -193,7 +214,7 @@ def writeGeoJsonFiles(geomList, geodir):
     for js in geomList:
 
         fname = os.path.join(geodir, "g_{}.json".format(i))
-        print("Writing "+fname)
+        logger.info("Writing "+fname)
         with open(fname, "w") as f:
             f.write(js)
 
@@ -203,7 +224,7 @@ def writeGeoJsonFiles(geomList, geodir):
 def writeNumTracksFile(fpath, num):
 
     # write file about how many tracks we have
-    print("Writing {}".format(fpath))
+    logger.info("Writing {}".format(fpath))
     with open(fpath, "w") as fp:
         json.dump(
             {"numberOfTrackFiles": num},
@@ -214,7 +235,7 @@ def writeNumTracksFile(fpath, num):
 def writeLegendFile(fpath, cat_frequencies):
 
     # dump file for legend
-    print("Writing {}".format(fpath))
+    logger.info("Writing {}".format(fpath))
     with open(fpath, "w") as legendfile:
         json.dump(cat_frequencies, legendfile)
 

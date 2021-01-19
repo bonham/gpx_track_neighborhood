@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class Gpx2db:
 
     def __init__(self, database_connection):
@@ -93,7 +98,7 @@ class Gpx2db:
             try:
                 self.cur.execute(sql)
             except Exception as e:
-                print(e)
+                logger.error(e)
             self.commit()
 
     def commit(self):

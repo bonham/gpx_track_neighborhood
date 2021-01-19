@@ -56,7 +56,7 @@ class GpxImport:
                 gpx_o = gpxpy.parse(gpx_fd)
 
             src_info = os.path.basename(gpx_file_name)
-            print("Loading {}".format(src_info))
+            logger.info("Loading {}".format(src_info))
             track_ids_created = self.g2d.load_gpx_file(
                 gpx_o, hash, src=src_info)
             self.last_track_ids = track_ids_created

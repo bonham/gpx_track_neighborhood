@@ -1,10 +1,9 @@
 import argparse
 import psycopg2 as pg2
-import logging
-from gpx2db import vac, getfiles, Gpx2db
-from gpx2db.utils import drop_db
+from gpx2db.utils import drop_db, setup_logging, vac, getfiles
 from gpx2db.proximity_calc import Transform
 from gpx2db.gpximport import GpxImport
+from gpx2db.gpx2dblib import Gpx2db
 
 
 # constants
@@ -28,21 +27,16 @@ def main():
         delete_db,
         debug) = a_parse()
 
-    if debug:
-        loglevel = logging.DEBUG
-    else:
-        loglevel = logging.INFO
-
-    logging.basicConfig(level=loglevel)
+    logger = setup_logging(debug)
 
     # get gpx filenames
     gpx_filelist = getfiles(dir_or_file)
-    print("Number of gpx files: {}".format(len(gpx_filelist)))
+    logger.info("Number of gpx files: {}".format(len(gpx_filelist)))
 
     if delete_db:
-        print("(Re-) creating database {}".format(database_name))
+        logger.info("(Re-) creating database {}".format(database_name))
     else:
-        print("Appending to database {}".format(database_name))
+        logger.info("Appending to database {}".format(database_name))
 
     if delete_db:
         drop_db(database_name, password)
@@ -82,7 +76,10 @@ def main():
 
     transform = Transform(conn)
 
-    print("Create tables and idexes")
+    logger.info("Create tables and idexes")
+    logger.error("test")
+    logger.warning("test")
+
     transform.create_structure()
 
     # Loop over files and import
@@ -93,7 +90,7 @@ def main():
 
         for new_track_id in track_ids_created:
 
-            print("Joining track segments")
+            logger.info("Joining track segments")
             transform.joinsegments(new_track_id)
             vac(conn_vac, "newpoints")
             vac(conn_vac, "newsegments")
@@ -104,24 +101,26 @@ def main():
             all_segment_ids = transform.get_segment_ids()
             new_segment_ids = transform.get_segment_ids([new_track_id])
 
-            print("\n== New track no {} has {} segments and {} points".format(
-                new_track_id,
-                len(new_segment_ids),
-                len(new_point_ids)
-            ))
-            print("Joining with a total of {} segments and {} points".format(
-                len(all_segment_ids),
-                len(all_point_ids)
-            ))
+            logger.info(
+                "\n== New track no {} has {} segments and {} points".format(
+                    new_track_id,
+                    len(new_segment_ids),
+                    len(new_point_ids)
+                ))
+            logger.info(
+                "Joining with a total of {} segments and {} points".format(
+                    len(all_segment_ids),
+                    len(all_point_ids)
+                ))
 
-            print("Creating circles from points")
+            logger.info("Creating circles from points")
             transform.create_circles(radius, new_track_id)
             vac(conn_vac, "circles")
 
-            print("Do intersections")
+            logger.info("Do intersections")
             transform.do_intersection(new_track_id)
 
-        print("\nCalculating categories")
+        logger.info("\nCalculating categories")
         transform.calc_categories()
 
 # --------------------------------
@@ -173,7 +172,6 @@ def a_parse():
         '--debug',
         action='store_true',
         help="Enable debug output"
-
     )
     args = parser.parse_args()
 

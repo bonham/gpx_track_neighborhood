@@ -1,3 +1,4 @@
+import os
 import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
@@ -40,11 +41,8 @@ def main():
     # connect to newly created db
     conn = pg2.connect(
         "dbname={} host={} user={} password={} port={}".format(
-            database_name,
-            args.host,
-            args.user,
-            args.password,
-            args.port))
+            database_name, args.host, args.user,
+            args.password, args.port))
     conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
@@ -57,11 +55,8 @@ def main():
     # connection for vacuum
     conn_vac = pg2.connect(
         "dbname={} host={} user={} password={} port={}".format(
-            database_name,
-            args.host,
-            args.user,
-            args.password,
-            args.port))
+            database_name, args.host, args.user,
+            args.password, args.port))
 
     conn_vac.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
@@ -76,9 +71,19 @@ def main():
 
     # Loop over files and import
     gpximp = GpxImport(conn)
-    for fname in gpx_filelist:
+    totalfiles = len(gpx_filelist)
+
+    for fileno, fname in enumerate(gpx_filelist):
 
         track_ids_created = gpximp.import_gpx_file(fname)
+        track_basename = os.path.basename(fname)
+        logger.info(
+            "\n\n=== Processing file no {}/{}: {}".format(
+                fileno,
+                totalfiles,
+                track_basename
+            )
+        )
 
         for new_track_id in track_ids_created:
 
@@ -94,7 +99,7 @@ def main():
             new_segment_ids = transform.get_segment_ids([new_track_id])
 
             logger.info(
-                "\n== New track no {} has {} segments and {} points".format(
+                "New track no {} has {} segments and {} points".format(
                     new_track_id,
                     len(new_segment_ids),
                     len(new_point_ids)
@@ -112,8 +117,8 @@ def main():
             logger.info("Do intersections")
             transform.do_intersection(new_track_id)
 
-        logger.info("\nCalculating categories")
-        transform.calc_categories()
+    logger.info("Calculating categories")
+    transform.calc_categories()
 
 # --------------------------------
 

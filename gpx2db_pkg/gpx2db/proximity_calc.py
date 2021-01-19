@@ -119,17 +119,6 @@ class Transform:
 
         return point_id_list
 
-    def get_tracks(self):
-        "Get all track ids"
-
-        cur = self.conn.cursor()
-
-        sql = "select id from tracks order by id"
-        cur.execute(sql)
-        r = cur.fetchall()
-        track_id_list = [x[0] for x in r]
-        return track_id_list
-
     def in_clause(self, values_list):
 
         # convert to strings

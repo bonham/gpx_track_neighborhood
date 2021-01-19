@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import glob
 import psycopg2 as pg2
@@ -51,6 +52,12 @@ def vac(conn, table):
 
 
 def getfiles(dir_or_file):
+
+    if not os.path.exists(dir_or_file):
+        logger.error("File or directory {} does not exist.".format(
+            dir_or_file
+        ))
+        sys.exit(1)
 
     if os.path.isfile(dir_or_file):
         fname = dir_or_file

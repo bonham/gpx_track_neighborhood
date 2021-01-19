@@ -1,6 +1,8 @@
 import argparse
 import psycopg2 as pg2
-from gpx2db.utils import drop_db, setup_logging, vac, getfiles
+from gpx2db.utils import (
+    drop_db, setup_logging,
+    vac, getfiles, getDbParentParser)
 from gpx2db.proximity_calc import Transform
 from gpx2db.gpximport import GpxImport
 from gpx2db.gpx2dblib import Gpx2db
@@ -16,58 +18,50 @@ TRACKPOINTS_TABLE = "track_points"
 def main():
 
     # parse args
-    (
-        dir_or_file,
-        database_name,
-        host,
-        db_user,
-        password,
-        dbport,
-        radius,
-        delete_db,
-        debug) = a_parse()
+    args = a_parse()
+    database_name = args.database
 
-    logger = setup_logging(debug)
+    logger = setup_logging(args.debug)
 
     # get gpx filenames
-    gpx_filelist = getfiles(dir_or_file)
+    gpx_filelist = getfiles(args.dir_or_file)
     logger.info("Number of gpx files: {}".format(len(gpx_filelist)))
 
-    if delete_db:
+    if args.createdb:
         logger.info("(Re-) creating database {}".format(database_name))
     else:
         logger.info("Appending to database {}".format(database_name))
 
-    if delete_db:
-        drop_db(database_name, password)
+    if args.createdb:
+        drop_db(database_name, args.password)
 
-#    gpximport(gpx_filelist, database_name, delete_db,
+#    gpximport(gpx_filelist, database_name, args.createdb,
 #              host, db_user, password, dbport)
     # connect to newly created db
     conn = pg2.connect(
         "dbname={} host={} user={} password={} port={}".format(
             database_name,
-            host,
-            db_user,
-            password,
-            dbport))
+            args.host,
+            args.user,
+            args.password,
+            args.port))
     conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
     g2d = Gpx2db(conn)
 
     # TODO: move database initialization up
-    if delete_db:
+    if args.createdb:
         g2d.init_db(drop=True)
 
     # connection for vacuum
     conn_vac = pg2.connect(
         "dbname={} host={} user={} password={} port={}".format(
             database_name,
-            host,
-            db_user,
-            password,
-            dbport))
+            args.host,
+            args.user,
+            args.password,
+            args.port))
 
     conn_vac.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
@@ -77,8 +71,6 @@ def main():
     transform = Transform(conn)
 
     logger.info("Create tables and idexes")
-    logger.error("test")
-    logger.warning("test")
 
     transform.create_structure()
 
@@ -114,7 +106,7 @@ def main():
                 ))
 
             logger.info("Creating circles from points")
-            transform.create_circles(radius, new_track_id)
+            transform.create_circles(args.radius, new_track_id)
             vac(conn_vac, "circles")
 
             logger.info("Do intersections")
@@ -130,10 +122,13 @@ def a_parse():
     parser = argparse.ArgumentParser(
         description=(
             'Load GPX files from specified directory into postgis database'
-        ))
+        ),
+        parents=[getDbParentParser()])
+
     parser.add_argument('dir_or_file',
                         help="GPX file or directory of GPX files")
     parser.add_argument('database')
+
     parser.add_argument(
         '--radius',
         help=(
@@ -142,25 +137,6 @@ def a_parse():
             "Default is {}m").format(
             RADIUS_DEFAULT), default=RADIUS_DEFAULT)
 
-    parser.add_argument(
-        '-n',
-        '--host',
-        default='localhost',
-        help="Database Host")
-    parser.add_argument(
-        '-u',
-        '--user',
-        default=PG_USER,
-        help="Database user")
-    parser.add_argument(
-        '-p',
-        '--password',
-        default='',
-        help="Database Password")
-    parser.add_argument(
-        '--port',
-        default='5432',
-        help="Database Port")
     parser.add_argument(
         '--createdb',
         action='store_true',
@@ -175,17 +151,7 @@ def a_parse():
     )
     args = parser.parse_args()
 
-    return (
-        args.dir_or_file,
-        args.database,
-        args.host,
-        args.user,
-        args.password,
-        args.port,
-        args.radius,
-        args.createdb,
-        args.debug
-    )
+    return args
 
 # --------------------------------
 

@@ -3,7 +3,7 @@ import os
 import psycopg2
 import json
 import shutil
-from gpx2db.utils import setup_logging
+from gpx2db.utils import setup_logging, getDbParentParser
 
 # constants
 PG_USER = "postgres"
@@ -17,35 +17,33 @@ logger = None
 def main():
 
     # parse args
-    (
-        database_name, host, db_user,
-        password, dbport, outputDir, mode, debug
-    ) = a_parse()
+    args = a_parse()
 
     global logger
-    logger = setup_logging(debug)
+    logger = setup_logging(args.debug)
 
     # connect to db
     conn = psycopg2.connect(
         "dbname={} host={} user={} password={} port={}".format(
-            database_name,
-            host,
-            db_user,
-            password,
-            dbport))
+            args.database,
+            args.host,
+            args.user,
+            args.password,
+            args.port))
     cur = conn.cursor()
 
+    outputDir = args.dataset_label
     geodir = os.path.join(BASEDIR, outputDir)
 
     cleanup(geodir)
     create_extend_metadata(BASEDIR, METADATA_FNAME, outputDir)
 
     (geometryList, categoryList) = (None, None)
-    if mode == "category":
+    if args.mode == "category":
 
         (geometryList, categoryList) = queryCategoryMode(cur)
 
-    elif mode == 'plain':
+    elif args.mode == 'plain':
 
         (geometryList, categoryList) = queryPlainMode(cur, MAXCATEGORIES)
 
@@ -62,7 +60,7 @@ def main():
 
     numTrackFilePath = os.path.join(geodir, "numberOfTracks.json")
     writeNumTracksFile(
-        numTrackFilePath, len(geometryList))
+        numTrackFilePath, len(geometryList))  # type: ignore
 
 
 # --------------------------------
@@ -71,38 +69,22 @@ def a_parse():
         description=(
             'Write gpx tracks as geojson to disk. '
             'The output directory will be '
-            '"html/static/geojson/<dataset_label>/"')
+            '"html/static/geojson/<dataset_label>/"'),
+        parents=[getDbParentParser()]
     )
     parser.add_argument('database')
-    parser.add_argument(
-        '-n',
-        '--host',
-        default='localhost',
-        help="Database Host")
-    parser.add_argument(
-        '-u',
-        '--user',
-        default=PG_USER,
-        help="Database user")
-    parser.add_argument(
-        '-p',
-        '--password',
-        default='',
-        help="Database Password")
+
     parser.add_argument(
         'dataset_label',
         help="This should be a unique label of your gpx set. E.g '2019'")
     parser.add_argument(
         '-m',
+        '--mode',
         default="category",
         type=str,
         choices=('category', 'plain'),
         help=("Extraction mode. Possible values: "
               "category|plain. If you omit the flag, the default is category"))
-    parser.add_argument(
-        '--port',
-        default='5432',
-        help="Database Port")
 
     parser.add_argument(
         '-d',
@@ -113,16 +95,7 @@ def a_parse():
 
     args = parser.parse_args()
 
-    return (
-        args.database,
-        args.host,
-        args.user,
-        args.password,
-        args.port,
-        args.dataset_label,
-        args.m,
-        args.debug
-    )
+    return args
 
 
 def cleanup(geodir):

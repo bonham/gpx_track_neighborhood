@@ -2,6 +2,8 @@ import os
 import logging
 import glob
 import psycopg2 as pg2
+import argparse
+
 logger = logging.getLogger(__name__)
 
 PG_ADMIN_DB = 'postgres'
@@ -93,7 +95,9 @@ def setup_logging(debug):
 
     if debug:
         loglevel = logging.DEBUG
-        fmt = '%(asctime)-15s - %(filename)s %(lineno)d - %(levelname)s - %(message)s'
+        fmt = (
+            '%(asctime)-15s - %(filename)s '
+            '%(lineno)d - %(levelname)s - %(message)s')
 
     else:
         loglevel = logging.INFO
@@ -108,3 +112,40 @@ def setup_logging(debug):
     logger.addHandler(ch)
 
     return logger
+
+
+def getDbParentParser():
+
+    PG_USER = 'postgres'
+
+    databaseArgParser = argparse.ArgumentParser(add_help=False)
+
+    # set password default from env variable
+    if 'PGPASSWORD' in os.environ:
+        pass_required = False
+        databaseArgParser.set_defaults(password=os.environ['PGPASSWORD'])
+
+    else:
+        pass_required = True
+
+    databaseArgParser.add_argument(
+        '-n',
+        '--host',
+        default='localhost',
+        help="Database Host")
+    databaseArgParser.add_argument(
+        '-u',
+        '--user',
+        default=PG_USER,
+        help="Database user")
+    databaseArgParser.add_argument(
+        '-p',
+        '--password',
+        required=pass_required,
+        help="Database Password")
+    databaseArgParser.add_argument(
+        '--port',
+        default='5432',
+        help="Database Port")
+
+    return databaseArgParser

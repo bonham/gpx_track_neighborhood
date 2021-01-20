@@ -194,7 +194,6 @@ def babel_gpx_snip_argument(latlon_pair_list):
     return babel_snip_args
 
 
-    ##############################################
 if __name__ == "__main__":
     # execute only if run as a script
     main()

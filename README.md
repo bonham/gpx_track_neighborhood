@@ -13,9 +13,9 @@ The project does calculate proximity of multiple tracks from gpx files. It does 
 * Put all your gpx tracks in a directory
 Run all python commands below. Use --help to learn what arguments to provide
 * Run <strong>0-simplify-tracks.py</strong>. This will use gpsbabel to reduce gpx tracks.
-* Run <strong>1-gpx2postgis.py</strong> \<source_dir> \<target_dbname> to import gpx tracks to database. The database will be created or overwritten.
-* Run <strong>2-proximity-calc.py</strong> to calculate intersections of gpx tracks.
-* Run <strong>4-export-geojson.py</strong> \<database> \<dataset_label> to create json files for html pages. Your geojson dataset will be in subdir html/static/geojson/<dataset_label>. Read about different export [modes](MODES.md)
+    * Define env variable GPX_SNIP_COORDS with space separated list of lat lon locations for all points in 1km distance to cut out: 'D.dddd,D.dddd D.dddd,D.dddd'
+* Run <strong>1-proximity-calc.py</strong> to calculate intersections of gpx tracks.
+* Run <strong>2-export-geojson.py</strong> \<database> \<dataset_label> to create json files for html pages. Your geojson dataset will be in subdir html/static/geojson/<dataset_label>. Read about different export [modes](MODES.md)
 * Repeat steps from above for each dataset you have. Each new dataset_label will create a new subdirectory and a new button on the webpage.
 * cd to subdirectory `html` and run `npm run build`. See [details here](html/README.md)
 

@@ -73,8 +73,9 @@ def main():
     gpximp = GpxImport(conn)
     totalfiles = len(gpx_filelist)
 
-    for fileno, fname in enumerate(gpx_filelist):
+    for idx, fname in enumerate(gpx_filelist):
 
+        fileno = idx + 1
         track_ids_created = gpximp.import_gpx_file(fname)
         track_basename = os.path.basename(fname)
         logger.info(

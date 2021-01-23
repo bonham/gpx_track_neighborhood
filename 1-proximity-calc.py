@@ -67,7 +67,8 @@ def main():
 
     logger.info("Create tables and idexes")
 
-    transform.create_structure()
+    if args.createdb:
+        transform.create_structure()
 
     # Loop over files and import
     gpximp = GpxImport(conn)

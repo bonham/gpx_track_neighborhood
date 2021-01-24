@@ -38,14 +38,13 @@ group by
     segment_id
 ;
 
-drop view if exists simplified_points;
-create view simplified_points as
+create or replace view simplified_points as
 select
     track_id,
     track_segment_id_old,
     segment_id,
-    (ST_Dump(wkb_geometry)).path[1] as segment_point_number,
-	(ST_Dump(wkb_geometry)).geom as wkb_geometry
+    (ST_DumpPoints(wkb_geometry)).path[1] as segment_point_number,
+	(ST_DumpPoints(wkb_geometry)).geom as wkb_geometry
 from simplified_segments
 ;
 

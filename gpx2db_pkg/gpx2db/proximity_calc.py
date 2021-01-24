@@ -46,6 +46,9 @@ class Transform:
             args=(track_id,))
 
         self.executor.execFile(
+            '0250_insert_enriched_points.sql')
+
+        self.executor.execFile(
             '0300_insert_segments.sql',
             args=(track_id,))
 

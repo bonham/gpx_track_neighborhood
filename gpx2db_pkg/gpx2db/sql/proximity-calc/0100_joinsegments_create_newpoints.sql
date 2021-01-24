@@ -1,7 +1,7 @@
 --- walk through all points, joín segments of same tracks which are not far apart
 --- by inserting points into segments and renumber the segment id
 
-insert into newpoints
+insert into joined_points
 with base as (
 select 
 	tp1.id,

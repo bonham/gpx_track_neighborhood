@@ -39,14 +39,15 @@ class Transform:
         self.executor.execFile(
             '3400_view_count_circle_freq_all.sql')
 
-    def joinsegments(self, track_id):
+    def prepare_segments(self, track_id):
 
         self.executor.execFile(
             '0100_joinsegments_create_newpoints.sql',
             args=(track_id,))
 
         self.executor.execFile(
-            '0250_insert_enriched_points.sql')
+            '0250_insert_enriched_points.sql',
+            args=(track_id,))
 
         self.executor.execFile(
             '0300_insert_segments.sql',

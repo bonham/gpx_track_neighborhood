@@ -11,6 +11,7 @@ SELECT
   wkb_geometry
 FROM
   enriched_points
+where track_id = {}
 order by
   segment_id,
   segment_point_number,

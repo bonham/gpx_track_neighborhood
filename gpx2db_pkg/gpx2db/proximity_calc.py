@@ -1,5 +1,5 @@
 import os
-from .utils import ExecuteSQLFile
+from .utils import ExecuteSQLFile, read_snip_coords
 import logging
 
 
@@ -41,9 +41,12 @@ class Transform:
 
     def prepare_segments(self, track_id):
 
+        clip_coords = read_snip_coords()
+        whereclause = gpx_clip_where_clause(clip_coords)
+
         self.executor.execFile(
             '0100_joinsegments_create_newpoints.sql',
-            args=(track_id,))
+            args=(whereclause, track_id,))
 
         self.executor.execFile(
             '0250_insert_enriched_points.sql',
@@ -130,3 +133,26 @@ class Transform:
 
         r = "IN (" + ",".join(values_list) + ")"
         return r
+
+
+def gpx_clip_where_clause(latlon_pair_list):
+    "Convert latlon pairs in a where clause"
+    "To cut out all points 1km around the locations"
+
+    clip_args = []
+
+    for pair in latlon_pair_list:
+
+        argstring = (
+            """
+                ST_Distance(
+                    tp.wkb_geometry::geography,
+                    ST_PointFromText('POINT({:s} {:s})', 4326)::geography
+                ) >= 1000
+            """
+        ).format(
+            pair[1], pair[0]
+        )
+        clip_args.append(argstring)
+
+    return " AND ".join(clip_args)

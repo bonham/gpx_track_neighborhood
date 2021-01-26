@@ -32,7 +32,6 @@ SELECT
 from joined_points
 group by
     track_id,
-    track_segment_id_old,
     segment_id
 ;
 

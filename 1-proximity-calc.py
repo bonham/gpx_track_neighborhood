@@ -89,8 +89,8 @@ def main():
 
         for new_track_id in track_ids_created:
 
-            logger.info("Joining track segments")
-            transform.joinsegments(new_track_id)
+            logger.info("Preparing track segments")
+            transform.prepare_segments(new_track_id)
             vac(conn_vac, "newpoints")
             vac(conn_vac, "newsegments")
 
@@ -119,7 +119,7 @@ def main():
             logger.info("Do intersections")
             transform.do_intersection(new_track_id)
 
-    logger.info("Calculating categories")
+    logger.info("\n=== Calculating categories")
     transform.calc_categories()
 
 # --------------------------------

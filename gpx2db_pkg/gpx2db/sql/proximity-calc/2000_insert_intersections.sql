@@ -1,5 +1,5 @@
--- identify pairs of intersections , but not do the intersection right now
--- the wkb_geometry column will be empty first
+-- intersect circles and points
+-- The ST_Intersects() clause will use gist index
 insert into circle_segment_intersections (
   circle_id,
   segment_id,

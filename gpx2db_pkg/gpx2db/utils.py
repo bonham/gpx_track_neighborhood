@@ -4,6 +4,7 @@ import logging
 import glob
 import psycopg2 as pg2
 import argparse
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -156,3 +157,37 @@ def getDbParentParser():
         help="Database Port")
 
     return databaseArgParser
+
+
+def read_snip_coords():
+    "Read list of coordinates from env"
+    " "
+    "Format: $env:GPX_SNIP_COORDS = 'D.dddd,D.dddd D.dddd,D.dddd'"
+    "list of decimal degrees lat,lon separated by comma,"
+    "multiple coordinates separated by space. Example"
+    " "
+    "$env:GPX_SNIP_COORDS = '49.213038,3.553038 49.6739,6.46637' "
+
+    VARNAME = 'GPX_SNIP_COORDS'
+    return_list = []
+
+    if VARNAME not in os.environ:
+        return []
+
+    # split by whitespace
+    pair_list = os.environ[VARNAME].split()
+
+    # regex pattern for pair
+    latlon_pattern = re.compile(
+        r'^(\d+\.\d+),(\d+\.\d+)$'
+    )
+
+    for pair in pair_list:
+
+        m = latlon_pattern.match(pair)
+        if m:
+            lat = m.group(1)
+            lon = m.group(2)
+            return_list.append((lat, lon))
+
+    return return_list

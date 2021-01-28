@@ -61,6 +61,7 @@ create or replace view enriched_points as
 
 -- Dump points from interpolated multipoints
 select
+  row_number() over (order by segment_id, segment_point_number) as tmp_id,
   segment_id,
   segment_point_number,
   track_id,
@@ -100,6 +101,7 @@ from (
         track_id,
         wkb_geometry as thispoint,
         lead(wkb_geometry) over (
+          partition by segment_id
           order by segment_id, segment_point_number) as nextpoint
       FROM
         simplified_points

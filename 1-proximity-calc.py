@@ -1,4 +1,6 @@
 import os
+import sys
+import re
 import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
@@ -39,10 +41,23 @@ def main():
 #    gpximport(gpx_filelist, database_name, args.createdb,
 #              host, db_user, password, dbport)
     # connect to newly created db
-    conn = pg2.connect(
-        "dbname={} host={} user={} password={} port={}".format(
-            database_name, args.host, args.user,
-            args.password, args.port))
+    try:
+        conn = pg2.connect(
+            "dbname={} host={} user={} password={} port={}".format(
+                database_name, args.host, args.user,
+                args.password, args.port))
+    except pg2.OperationalError as e:
+        errmsg = e.args[0]
+        if re.search(r'database .* does not exist', errmsg):
+            logger.error(
+                "Database {} does not exist. "
+                "Use the --create flag or choose existing DB")
+            sys.exit(1)
+        else:
+            print(re)
+            print(e)
+            raise
+
     conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 

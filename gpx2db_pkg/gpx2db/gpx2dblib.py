@@ -167,10 +167,14 @@ class Gpx2db:
     def store_track(self, track, rowid, hash, src=None):
 
         name = track.name
+        if name is None:
+            name = 'NULL'
+        else:
+            name = "'{}'".format(name)
 
         sql = """
             insert into {} (id, name, hash, src)
-            values({},'{}','{}','{}')
+            values({},{},'{}','{}')
         """.format(
             self.tracks_table,
             rowid,

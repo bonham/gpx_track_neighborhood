@@ -13,7 +13,6 @@ class GpxImport:
 
         self.conn = conn
         self.g2d = Gpx2db(conn)
-        self.last_track_ids = []
 
         self.hashes = self.load_hashes_from_db()
 
@@ -59,9 +58,5 @@ class GpxImport:
             logger.info("Loading {}".format(src_info))
             track_ids_created = self.g2d.load_gpx_file(
                 gpx_o, hash, src=src_info)
-            self.last_track_ids = track_ids_created
 
             return track_ids_created
-
-    def get_last_track_ids(self):
-        return self.last_track_ids

@@ -36,7 +36,7 @@ def main():
         logger.info("Appending to database {}".format(database_name))
 
     if args.createdb:
-        drop_db(database_name, args.password)
+        drop_db(database_name, args.password, host=args.host, dbport=args.port)
 
 #    gpximport(gpx_filelist, database_name, args.createdb,
 #              host, db_user, password, dbport)
@@ -143,7 +143,7 @@ def main():
 def a_parse():
     parser = argparse.ArgumentParser(
         description=(
-            'Load GPX files from specified directory into postgis database'
+            'Add GPX files from specified file or directory to database and perform proximity calculation'
         ),
         parents=[getDbParentParser()])
 

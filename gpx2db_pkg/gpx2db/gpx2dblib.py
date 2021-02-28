@@ -36,6 +36,10 @@ class Gpx2db:
             name varchar(2000),
             src varchar(2000),
             hash varchar(64),
+            time timestamp,
+            length double precision,
+            timelength integer,
+            ascent double precision,
             wkb_geometry geometry(MultiLineString,4326)
             )
         """.format(
@@ -164,23 +168,42 @@ class Gpx2db:
         )
         self.cur.execute(sql)
 
+    def extract_extensions(self, ext_list):
+
+        r = {x.tag: x.text for x in ext_list}
+        return r
+
     def store_track(self, track, rowid, hash, src=None):
 
         name = track.name
-        if name is None:
-            name = 'NULL'
-        else:
-            name = "'{}'".format(name)
+
+        # TODO: validate if key exists:
+        ext = self.extract_extensions(track.extensions)
+        time = ext.get("time", None)
+        length = ext.get("length", None)
+        timelength = ext.get("timelength", None)
+        totalascent = ext.get("totalascent", None)
+
+        def wrapquotes(s):
+            if s is None:
+                return 'NULL'
+            else:
+                return "'{}'".format(s)
 
         sql = """
-            insert into {} (id, name, hash, src)
-            values({},{},'{}','{}')
+            insert into {}
+            (id, name, hash, src, time, length, timelength, ascent)
+            values({},{},{},{},{},{},{},{})
         """.format(
             self.tracks_table,
             rowid,
-            name,
-            hash,
-            src
+            wrapquotes(name),
+            wrapquotes(hash),
+            wrapquotes(src),
+            wrapquotes(time),
+            wrapquotes(length),
+            wrapquotes(timelength),
+            wrapquotes(totalascent)
         )
         self.cur.execute(sql)
 

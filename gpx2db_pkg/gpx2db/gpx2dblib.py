@@ -69,6 +69,7 @@ class Gpx2db:
             track_id integer REFERENCES {} (id),
             track_segment_id integer not null,
             segment_point_id integer not null,
+            elevation double precision,
             wkb_geometry geometry(Point,4326),
             unique ( track_id, track_segment_id, segment_point_id )
             )
@@ -144,6 +145,7 @@ class Gpx2db:
 
                 self.store_segment(track_id, segnum)
                 storelist = []
+
                 for pointnum, point in enumerate(segment.points):
 
                     storetuple = (
@@ -157,6 +159,7 @@ class Gpx2db:
                 self.store_points(storelist)
 
             self.track_update_geometry(track_id)
+            self.track_update_length(track_id)
             self.commit()
         return track_ids_created
 
@@ -175,14 +178,14 @@ class Gpx2db:
 
     def store_track(self, track, rowid, hash, src=None):
 
+        # we do not store length and totalascent, we calculate it later
+
         name = track.name
 
         # TODO: validate if key exists:
         ext = self.extract_extensions(track.extensions)
         time = ext.get("time", None)
-        length = ext.get("length", None)
         timelength = ext.get("timelength", None)
-        totalascent = ext.get("totalascent", None)
 
         def wrapquotes(s):
             if s is None:
@@ -192,8 +195,8 @@ class Gpx2db:
 
         sql = """
             insert into {}
-            (id, name, hash, src, time, length, timelength, ascent)
-            values({},{},{},{},{},{},{},{})
+            (id, name, hash, src, time, timelength)
+            values({},{},{},{},{},{})
         """.format(
             self.tracks_table,
             rowid,
@@ -201,9 +204,7 @@ class Gpx2db:
             wrapquotes(hash),
             wrapquotes(src),
             wrapquotes(time),
-            wrapquotes(length),
             wrapquotes(timelength),
-            wrapquotes(totalascent)
         )
         self.cur.execute(sql)
 
@@ -211,7 +212,10 @@ class Gpx2db:
 
         sql = (
             "insert into {} "
-            "  (track_id, track_segment_id, segment_point_id, wkb_geometry) "
+            "  ("
+            "       track_id, track_segment_id,"
+            "       segment_point_id, elevation, wkb_geometry"
+            "  )"
             "  values ").format(
             self.track_points_table
         )
@@ -226,10 +230,13 @@ class Gpx2db:
                 point.latitude
             )
 
-            valuepart = "({},{},{},{})".format(
+            elevation = point.elevation
+
+            valuepart = "({},{},{},{},{})".format(
                 track_id,
                 track_seg_id,
                 segment_point_id,
+                elevation,
                 point_wkt
             )
 
@@ -250,6 +257,24 @@ class Gpx2db:
                 from base
             ) as subquery
             where id = {0}
+        """.format(track_id)
+
+        self.cur.execute(sql)
+
+    def track_update_length(self, track_id):
+
+        sql = """
+            update tracks
+                set length = subquery.length
+            from (
+                select
+                    id,
+                    ST_Length(wkb_geometry::geography) as length
+                from tracks
+            ) as subquery
+            where
+                subquery.id = {0} and
+                tracks.id = {0}
         """.format(track_id)
 
         self.cur.execute(sql)

@@ -1,4 +1,4 @@
---- walk through all points, joín segments of same tracks which are not far apart
+--- walk through all points, join segments of same tracks which are not far apart
 --- by inserting points into segments and renumber the segment id
 
 insert into joined_points

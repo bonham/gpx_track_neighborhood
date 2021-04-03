@@ -139,7 +139,7 @@ def gpx_clip_where_clause(latlon_pair_list):
     "Convert latlon pairs in a where clause"
     "To cut out all points 1km around the locations"
 
-    clip_args = []
+    clip_args = ["1 = 1"]  # pepare for missing latlon_pair_list
 
     for pair in latlon_pair_list:
 

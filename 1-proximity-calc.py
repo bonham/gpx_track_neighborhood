@@ -143,7 +143,8 @@ def main():
 def a_parse():
     parser = argparse.ArgumentParser(
         description=(
-            'Add GPX files from specified file or directory to database and perform proximity calculation'
+            'Add GPX files from specified file or directory '
+            'to database and perform proximity calculation'
         ),
         parents=[getDbParentParser()])
 

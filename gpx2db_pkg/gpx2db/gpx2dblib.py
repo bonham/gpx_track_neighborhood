@@ -160,6 +160,7 @@ class Gpx2db:
 
             self.track_update_geometry(track_id)
             self.track_update_length(track_id)
+            self.track_update_ascent(track_id)
             self.commit()
         return track_ids_created
 
@@ -275,6 +276,40 @@ class Gpx2db:
             where
                 subquery.id = {0} and
                 tracks.id = {0}
+        """.format(track_id)
+
+        self.cur.execute(sql)
+
+    def track_update_ascent(self, track_id):
+
+        sql = """
+            with base as (
+                select
+                    id,
+                    track_id,
+                    track_segment_id,
+                    elevation - lag(elevation) over (
+                        partition by
+                            track_id,
+                            track_segment_id
+                            order by id) as diff
+                from track_points
+                where
+                    track_points.elevation != 0
+                    and track_id = {0}
+                order by id
+            )
+            update tracks
+                set ascent = subquery.ascent
+            from (
+                select
+                    track_id,
+                    sum(greatest(0, diff)) as ascent
+                from base
+                group by(track_id)
+            ) as subquery
+            where tracks.id = {0}
+            and subquery.track_id = {0}
         """.format(track_id)
 
         self.cur.execute(sql)

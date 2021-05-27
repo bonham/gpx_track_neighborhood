@@ -9,5 +9,6 @@
   "python.linting.enabled": true,
   "search.exclude": {
     "**/venv": true
-  }
+  },
+  "python.linting.pylintEnabled": false
 }

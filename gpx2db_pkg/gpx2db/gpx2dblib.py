@@ -141,12 +141,17 @@ class Gpx2db:
             track_ids_created.append(track_id)
             self.store_track(track, track_id, hash, src)
 
+            first_point_of_track = None
+
             for segnum, segment in enumerate(track.segments):
 
                 self.store_segment(track_id, segnum)
                 storelist = []
 
                 for pointnum, point in enumerate(segment.points):
+
+                    if first_point_of_track is None:
+                        first_point_of_track = point
 
                     storetuple = (
                         point,
@@ -158,6 +163,7 @@ class Gpx2db:
 
                 self.store_points(storelist)
 
+            self.track_update_time(track_id, track, first_point_of_track)
             self.track_update_geometry(track_id)
             self.track_update_length(track_id)
             self.track_update_ascent(track_id)
@@ -244,6 +250,31 @@ class Gpx2db:
             sql_value_list.append(valuepart)
 
         sql += ",".join(sql_value_list)
+        self.cur.execute(sql)
+
+    def track_update_time(self, track_id, track, first_point_of_track):
+
+        ext = self.extract_extensions(track.extensions)
+        time = ext.get("time", None)
+
+        # do nothing if time is already in gpx track extensions
+        if time is not None:
+            return
+
+        # do nothing if time attribute is not in point
+        if first_point_of_track.time is None:
+            return
+
+        # else update table
+        timeOfFirstPoint = first_point_of_track.time.isoformat()
+
+        sql = """
+            update tracks
+            set  time = '{}'  where id = {}
+            """.format(
+                timeOfFirstPoint,
+                track_id
+            )
         self.cur.execute(sql)
 
     def track_update_geometry(self, track_id):

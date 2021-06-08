@@ -36,7 +36,7 @@ class Gpx2db:
             name varchar(2000),
             src varchar(2000),
             hash varchar(64),
-            time timestamp,
+            time timestamp with time zone,
             length double precision,
             timelength integer,
             ascent double precision,

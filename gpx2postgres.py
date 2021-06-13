@@ -7,7 +7,7 @@ from gpx2db.utils import (
     getfiles, getDbParentParser)
 from gpx2db.gpximport import GpxImport
 from gpx2db.gpx2dblib import Gpx2db
-
+import traceback
 
 # constants
 PG_USER = "postgres"
@@ -67,16 +67,23 @@ def main():
 
     for fname in gpx_filelist:
 
-        track_ids_created = gpximp.import_gpx_file(fname)
-        track_ids_created_s = [str(i) for i in track_ids_created]
-        if track_ids_created:
-            s_or_not = "s" if len(track_ids_created) > 1 else ""
-            logger.info(
-                "Created track id{:s} {:s}".format(
-                    s_or_not,
-                    " ".join(track_ids_created_s)
+        try:
+            track_ids_created = gpximp.import_gpx_file(fname)
+        except Exception:
+            logger.error(
+                "Exception occurred when trying to import {}".format(fname))
+            logger.error(traceback.format_exc())
+            continue
+        else:
+            track_ids_created_s = [str(i) for i in track_ids_created]
+            if track_ids_created:
+                s_or_not = "s" if len(track_ids_created) > 1 else ""
+                logger.info(
+                    "Created track id{:s} {:s}".format(
+                        s_or_not,
+                        " ".join(track_ids_created_s)
+                    )
                 )
-            )
 
 
 # --------------------------------

@@ -51,7 +51,10 @@ class GpxImport:
 
             hash = self.get_hash_from_file(gpx_file_name)
 
-            with open(gpx_file_name, 'r') as gpx_fd:
+            # utf-8-sig used bacause
+            # https://stackoverflow.com/a/44573867/4720160
+            # and because openrouteservice creates utf 8 with bom
+            with open(gpx_file_name, 'r', encoding='utf-8-sig') as gpx_fd:
                 gpx_o = gpxpy.parse(gpx_fd)
 
             src_info = os.path.basename(gpx_file_name)

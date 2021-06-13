@@ -237,7 +237,7 @@ class Gpx2db:
                 point.latitude
             )
 
-            elevation = point.elevation
+            elevation = point.elevation or 'NULL'
 
             valuepart = "({},{},{},{},{})".format(
                 track_id,

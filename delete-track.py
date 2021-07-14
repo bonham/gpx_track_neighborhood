@@ -35,7 +35,12 @@ def main():
         'gpx2db',
         'sql')
     ex = ExecuteSQLFile(conn, sqldir)
-    ex.execFile('delete-track.sql', args=(args.track_id,))
+
+    ex.execFile('delete-track-base.sql', args=(args.track_id,))
+    try:
+        ex.execFile('delete-track-extended.sql', args=(args.track_id,))
+    except pg2.errors.UndefinedTable:
+        logger.warning("Some of the extended tables not found")
 
     logger.info("Track deleted")
 

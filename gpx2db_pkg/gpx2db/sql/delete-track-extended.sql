@@ -14,6 +14,3 @@ delete from frequency_lines where track_id = {0};
 delete from joined_points where track_id = {0};
 delete from newpoints where track_id = {0};
 delete from newsegments where track_id = {0};
-delete from segments where track_id = {0};
-delete from track_points where track_id = {0};
-delete from tracks where id = {0};

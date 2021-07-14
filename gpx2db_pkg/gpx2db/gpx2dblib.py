@@ -163,7 +163,7 @@ class Gpx2db:
 
                 self.store_points(storelist)
 
-            self.track_update_time(track_id, track, first_point_of_track)
+            self.track_update_time(gpx, track_id, track, first_point_of_track)
             self.track_update_geometry(track_id)
             self.track_update_length(track_id)
             self.track_update_ascent(track_id)
@@ -252,27 +252,36 @@ class Gpx2db:
         sql += ",".join(sql_value_list)
         self.cur.execute(sql)
 
-    def track_update_time(self, track_id, track, first_point_of_track):
+    def track_update_time(self, gpx, track_id, track, first_point_of_track):
 
         ext = self.extract_extensions(track.extensions)
         time = ext.get("time", None)
 
-        # do nothing if time is already in gpx track extensions
+        # if time is already in gpx track extensions then good
         if time is not None:
+            logger.debug("Time was already in track extensions: {}".format(time))
             return
+
+        alternate_time = None
+        # next look in metadata
+        if hasattr(gpx, 'time'):
+            alternate_time = gpx.time.isoformat()
+            logger.debug("Retrieved time from gpx metadata: {}".format(alternate_time))
 
         # do nothing if time attribute is not in point
-        if first_point_of_track.time is None:
+        elif first_point_of_track.time is None:
+            logger.debug("Could not find time in any attributes")
             return
 
-        # else update table
-        timeOfFirstPoint = first_point_of_track.time.isoformat()
+        else:
+            alternate_time = first_point_of_track.time.isoformat()
 
+        # else update table
         sql = """
             update tracks
             set  time = '{}'  where id = {}
             """.format(
-                timeOfFirstPoint,
+                alternate_time,
                 track_id
             )
         self.cur.execute(sql)

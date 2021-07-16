@@ -3,7 +3,11 @@ import os
 import psycopg2
 import json
 import shutil
-from gpx2db.utils import setup_logging, getDbParentParser, create_connection_string
+from gpx2db.utils import (
+    setup_logging,
+    getDbParentParser,
+    create_connection_string
+)
 
 # constants
 PG_USER = "postgres"

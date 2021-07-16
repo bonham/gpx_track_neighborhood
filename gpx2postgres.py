@@ -3,8 +3,12 @@ import re
 import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
-    drop_db, setup_logging,
-    getfiles, getDbParentParser)
+    drop_db,
+    setup_logging,
+    getfiles,
+    getDbParentParser,
+    create_connection_string
+    )
 from gpx2db.gpximport import GpxImport
 from gpx2db.gpx2dblib import Gpx2db
 import traceback
@@ -22,6 +26,7 @@ def main():
     database_name = args.database
 
     logger = setup_logging(args.debug)
+    connstring = create_connection_string(database_name, args)
 
     # get gpx filenames
     gpx_filelist = getfiles(args.dir_or_file)
@@ -37,10 +42,8 @@ def main():
 
     # connect to newly created db
     try:
-        conn = pg2.connect(
-            "dbname={} host={} user={} password={} port={}".format(
-                database_name, args.host, args.user,
-                args.password, args.port))
+        conn = pg2.connect(connstring)
+
     except pg2.OperationalError as e:
         errmsg = e.args[0]
         if re.search(r'database .* does not exist', errmsg):

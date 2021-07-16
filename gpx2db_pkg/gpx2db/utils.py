@@ -8,9 +8,6 @@ import re
 
 logger = logging.getLogger(__name__)
 
-PG_ADMIN_DB = 'postgres'
-PG_ADMIN_DB_USER = 'postgres'
-
 
 class ExecuteSQLFile:
 
@@ -73,18 +70,11 @@ def getfiles(dir_or_file):
         return filelist
 
 
-def drop_db(
-        database_name_to_drop, admin_db_password,
-        host='localhost', dbport=5432):
+def drop_db(database_name_to_drop, args):
 
     # connect to system database 'postgres' first
-    sysDBconn = pg2.connect(
-        "dbname={} host={} user={} password={} port={}".format(
-            PG_ADMIN_DB,
-            host,
-            PG_ADMIN_DB_USER,
-            admin_db_password,
-            dbport))
+    connstring = create_connection_string(database_name_to_drop, args)
+    sysDBconn = pg2.connect(connstring)
     sysDBconn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
@@ -124,8 +114,6 @@ def setup_logging(debug):
 
 def getDbParentParser():
 
-    PG_USER = 'postgres'
-
     databaseArgParser = argparse.ArgumentParser(add_help=False)
 
     # set password default from env variable
@@ -139,12 +127,10 @@ def getDbParentParser():
     databaseArgParser.add_argument(
         '-n',
         '--host',
-        default='localhost',
         help="Database Host")
     databaseArgParser.add_argument(
         '-u',
         '--user',
-        default=PG_USER,
         help="Database user")
     databaseArgParser.add_argument(
         '-p',
@@ -153,7 +139,6 @@ def getDbParentParser():
         help="Database Password")
     databaseArgParser.add_argument(
         '--port',
-        default='5432',
         help="Database Port")
 
     return databaseArgParser
@@ -191,3 +176,28 @@ def read_snip_coords():
             return_list.append((lat, lon))
 
     return return_list
+
+
+def create_connection_string(database_name, args):
+    "set defaults here"
+
+    connstring = "dbname=" + database_name
+
+    if args.host:
+        connstring += " host=" + args.host
+    elif "PGHOST" not in os.environ:
+        connstring += " host=localhost"
+
+    if args.user:
+        connstring += " user=" + args.user
+    elif "PGUSER" not in os.environ:
+        connstring += " user=postgres"
+
+    if args.password:
+        connstring += " password=" + args.password
+
+    if args.port:
+        connstring += " port=" + args.port
+
+    logger.debug("Connection string: {}".format(connstring))
+    return connstring

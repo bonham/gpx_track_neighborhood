@@ -33,7 +33,7 @@ def main():
         logger.info("Appending to database {}".format(database_name))
 
     if args.createdb:
-        drop_db(database_name, args.password, host=args.host, dbport=args.port)
+        drop_db(database_name, args)
 
     # connect to newly created db
     try:

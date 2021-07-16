@@ -3,7 +3,7 @@ import os
 import psycopg2
 import json
 import shutil
-from gpx2db.utils import setup_logging, getDbParentParser
+from gpx2db.utils import setup_logging, getDbParentParser, create_connection_string
 
 # constants
 PG_USER = "postgres"
@@ -21,15 +21,10 @@ def main():
 
     global logger
     logger = setup_logging(args.debug)
+    connstring = create_connection_string(args.database, args)
 
     # connect to db
-    conn = psycopg2.connect(
-        "dbname={} host={} user={} password={} port={}".format(
-            args.database,
-            args.host,
-            args.user,
-            args.password,
-            args.port))
+    conn = psycopg2.connect(connstring)
     cur = conn.cursor()
 
     outputDir = args.dataset_label

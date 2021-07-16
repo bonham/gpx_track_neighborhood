@@ -4,22 +4,23 @@ import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
     setup_logging,
-    getDbParentParser)
+    getDbParentParser,
+    create_connection_string)
 
 
 def main():
 
     # parse args
     args = a_parse()
-    database_name = args.database
 
     logger = setup_logging(args.debug)
 
+    connstring = create_connection_string(args.database, args)
+
     try:
-        conn = pg2.connect(
-            "dbname={} host={} user={} password={} port={}".format(
-                database_name, args.host, args.user,
-                args.password, args.port))
+
+        conn = pg2.connect(connstring)
+
     except pg2.OperationalError as e:
         errmsg = e.args[0]
         if re.search(r'database .* does not exist', errmsg):

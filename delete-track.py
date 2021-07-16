@@ -4,8 +4,11 @@ import re
 import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
-    ExecuteSQLFile, setup_logging,
-    getDbParentParser)
+    ExecuteSQLFile,
+    setup_logging,
+    getDbParentParser,
+    create_connection_string
+    )
 
 
 def main():
@@ -15,14 +18,16 @@ def main():
     database_name = args.database
 
     logger = setup_logging(args.debug)
+    connstring = create_connection_string(database_name, args)
 
     try:
-        conn = pg2.connect(
-            "dbname={} host={} user={} password={} port={}".format(
-                database_name, args.host, args.user,
-                args.password, args.port))
+        conn = pg2.connect(connstring)
     except pg2.OperationalError as e:
-        errmsg = e.args[0]
+        logger.debug(e)
+        if len(e.args) > 0:
+            errmsg = e.args[0]
+        else:
+            errmsg = ""
         if re.search(r'database .* does not exist', errmsg):
             logger.error(
                 "Database {} does not exist.")

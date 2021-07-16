@@ -5,7 +5,8 @@ import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
     drop_db, setup_logging,
-    vac, getfiles, getDbParentParser)
+    vac, getfiles, getDbParentParser,
+    create_connection_string)
 from gpx2db.proximity_calc import Transform
 from gpx2db.gpximport import GpxImport
 from gpx2db.gpx2dblib import Gpx2db
@@ -25,6 +26,7 @@ def main():
     database_name = args.database
 
     logger = setup_logging(args.debug)
+    connstring = create_connection_string(database_name, args)
 
     # get gpx filenames
     gpx_filelist = getfiles(args.dir_or_file)
@@ -36,16 +38,13 @@ def main():
         logger.info("Appending to database {}".format(database_name))
 
     if args.createdb:
-        drop_db(database_name, args.password, host=args.host, dbport=args.port)
+        drop_db(database_name, args)
 
 #    gpximport(gpx_filelist, database_name, args.createdb,
 #              host, db_user, password, dbport)
     # connect to newly created db
     try:
-        conn = pg2.connect(
-            "dbname={} host={} user={} password={} port={}".format(
-                database_name, args.host, args.user,
-                args.password, args.port))
+        conn = pg2.connect(connstring)
     except pg2.OperationalError as e:
         errmsg = e.args[0]
         if re.search(r'database .* does not exist', errmsg):
@@ -68,11 +67,7 @@ def main():
         g2d.init_db(drop=True)
 
     # connection for vacuum
-    conn_vac = pg2.connect(
-        "dbname={} host={} user={} password={} port={}".format(
-            database_name, args.host, args.user,
-            args.password, args.port))
-
+    conn_vac = pg2.connect(connstring)
     conn_vac.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
     vac(conn_vac, TRACKS_TABLE)

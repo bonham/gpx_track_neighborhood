@@ -8,6 +8,8 @@ import re
 
 logger = logging.getLogger(__name__)
 
+PG_ADMIN_DB = 'postgres'
+
 
 class ExecuteSQLFile:
 
@@ -73,7 +75,7 @@ def getfiles(dir_or_file):
 def drop_db(database_name_to_drop, args):
 
     # connect to system database 'postgres' first
-    connstring = create_connection_string(database_name_to_drop, args)
+    connstring = create_connection_string(PG_ADMIN_DB, args)
     sysDBconn = pg2.connect(connstring)
     sysDBconn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore

@@ -264,7 +264,7 @@ class Gpx2db:
 
         alternate_time = None
         # next look in metadata
-        if hasattr(gpx, 'time'):
+        if hasattr(gpx, 'time') and gpx.time:
             alternate_time = gpx.time.isoformat()
             logger.debug("Retrieved time from gpx metadata: {}".format(alternate_time))
 

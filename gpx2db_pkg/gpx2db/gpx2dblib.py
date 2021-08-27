@@ -259,14 +259,17 @@ class Gpx2db:
 
         # if time is already in gpx track extensions then good
         if time is not None:
-            logger.debug("Time was already in track extensions: {}".format(time))
+            logger.debug(
+                "Time was already in track extensions: {}".format(
+                    time))
             return
 
         alternate_time = None
         # next look in metadata
         if hasattr(gpx, 'time') and gpx.time:
             alternate_time = gpx.time.isoformat()
-            logger.debug("Retrieved time from gpx metadata: {}".format(alternate_time))
+            logger.debug("Retrieved time from gpx metadata: {}".format(
+                alternate_time))
 
         # do nothing if time attribute is not in point
         elif first_point_of_track.time is None:

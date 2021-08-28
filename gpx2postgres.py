@@ -68,11 +68,13 @@ def main():
     # Loop over files and import
     gpximp = GpxImport(conn)
 
+    exit_code = 0
     for fname in gpx_filelist:
 
         try:
             track_ids_created = gpximp.import_gpx_file(fname)
         except Exception:
+            exit_code = 1
             logger.error(
                 "Exception occurred when trying to import {}".format(fname))
             logger.error(traceback.format_exc())
@@ -87,6 +89,7 @@ def main():
                         " ".join(track_ids_created_s)
                     )
                 )
+    sys.exit(exit_code)
 
 
 # --------------------------------

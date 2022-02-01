@@ -17,7 +17,7 @@ create table frequency_lines
     constraint freq_lines_pk primary key (point_id_start )
 )
 tablespace pg_default;
-create index on public.frequency_lines(point_id_end);
+create index on frequency_lines(point_id_end);
 
 -- first population
 insert into frequency_lines (

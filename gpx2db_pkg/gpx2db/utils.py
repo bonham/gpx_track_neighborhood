@@ -72,22 +72,48 @@ def getfiles(dir_or_file):
         return filelist
 
 
-def drop_db(database_name_to_drop, args):
+def connect_nice(connstring):
+    "Connect and print nice error and exit 1 if db does not exist"
+    try:
+        conn = pg2.connect(connstring)
+    except pg2.OperationalError as e:
+        errmsg = e.args[0]
+        m = re.search(r'database (.*?) does not exist', errmsg)
+        if m:
+            logger.error((
+                "Database {} does not exist. "
+                "You must create the database first or choose existing DB"
+                ).format(m.group(1)))
+            sys.exit(1)
+        else:
+            print(re)
+            print(e)
+            raise
+    else:
+        return conn
 
-    # connect to system database 'postgres' first
-    connstring = create_connection_string(PG_ADMIN_DB, args)
+
+def drop_db(database_name_to_drop, connstring):
+
+    sql_drop = "drop database if exists {0}".format(database_name_to_drop)
+    exec_with_connect(sql_drop, connstring)
+
+
+def create_db(database_name, connstring):
+
+    sql_create = "create database {0}".format(database_name)
+    exec_with_connect(sql_create, connstring)
+
+
+def exec_with_connect(sql, connstring):
+
     sysDBconn = pg2.connect(connstring)
     sysDBconn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
     sysDBcur = sysDBconn.cursor()
 
-    # sql setup
-    sql1 = "drop database if exists {0}".format(database_name_to_drop)
-    sql2 = "create database {0}".format(database_name_to_drop)
-
-    sysDBcur.execute(sql1)
-    sysDBcur.execute(sql2)
+    sysDBcur.execute(sql)
     sysDBconn.close()
 
 
@@ -142,6 +168,9 @@ def getDbParentParser():
     databaseArgParser.add_argument(
         '--port',
         help="Database Port")
+    databaseArgParser.add_argument(
+        '--schema',
+        help="Database Schema (Default is public)")
 
     return databaseArgParser
 
@@ -200,6 +229,9 @@ def create_connection_string(database_name, args):
 
     if args.port:
         connstring += " port=" + args.port
+
+    if args.schema:
+        connstring += " options='-c search_path={}'".format(args.schema)
 
     logger.debug("Connection string: {}".format(connstring))
     return connstring

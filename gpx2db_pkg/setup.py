@@ -8,7 +8,6 @@ setup(
     # author_email='foomail@foo.com',
     packages=find_packages(),
     # external packages as dependencies
-    install_requires=['gpxpy==1.4.2', 'psycopg2>=2.8.6'],
-    python_requires='>=3.8',
-   
+    install_requires=['gpxpy==1.4.2', 'psycopg2>=2.8.6', 'mock'],
+    python_requires='>=3.8'
 )

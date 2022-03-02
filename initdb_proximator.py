@@ -1,13 +1,14 @@
-import os
 import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
-    ExecuteSQLFile,
     setup_logging,
     getDbParentParser,
     create_connection_string,
     connect_nice
-    )
+)
+from gpx2db.proximity_calc import (
+    Transform
+)
 
 
 def main():
@@ -15,39 +16,25 @@ def main():
     # parse args
     args = a_parse()
     database_name = args.database
-
     logger = setup_logging(args.debug)
+    logger.debug("Args parsed")
     connstring = create_connection_string(database_name, args)
-
     conn = connect_nice(connstring)
-
-    sqldir = os.path.join(
-        os.path.dirname(__file__),
-        'gpx2db_pkg',
-        'gpx2db',
-        'sql')
-    ex = ExecuteSQLFile(conn, sqldir)
-
-    ex.execFile('delete-track-base.sql', args=(args.track_id,))
-    try:
-        ex.execFile('delete-track-extended.sql', args=(args.track_id,))
-    except pg2.errors.UndefinedTable:
-        logger.warning("Some of the extended tables not found")
-
-    logger.info("Track deleted")
+    conn.set_isolation_level(
+        pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
+    # TODO: check where we do vacuuming
+    transform = Transform(conn)
+    transform.create_structure()
 
 
 def a_parse():
     parser = argparse.ArgumentParser(
         description=(
-            'Delete gpx track with given id from all database tables'
+            'Add proximator extension to gpxdb'
         ),
         parents=[getDbParentParser()])
 
     parser.add_argument('database')
-    parser.add_argument('track_id',
-                        help="id of track",
-                        type=int)
 
     parser.add_argument(
         '-d',
@@ -60,7 +47,6 @@ def a_parse():
     return args
 
 
-###################################################
 if __name__ == "__main__":
     # execute only if run as a script
     main()

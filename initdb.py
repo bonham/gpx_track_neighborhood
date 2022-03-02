@@ -1,9 +1,11 @@
 import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
+    PG_ADMIN_DB,
+    connect_nice,
     drop_db,
+    create_db,
     setup_logging,
-    getDbParentParser,
     create_connection_string
     )
 from gpx2db.gpx2dblib import Gpx2db
@@ -21,31 +23,45 @@ def main():
     database_name = args.database
 
     logger = setup_logging(args.debug)
-    connstring = create_connection_string(database_name, args)
-    logger.debug("Connection string: {}".format(connstring))
+    logger.debug("Logger initialized")
+    admin_connstring = create_connection_string(PG_ADMIN_DB, args)
+    conn = connect_nice(admin_connstring)
 
-    drop_db(database_name, args) # delete and recreate
+    if args.create:
+        drop_db(database_name, admin_connstring)
+        create_db(database_name, admin_connstring)
+
     # connect to newly created db
-    conn = pg2.connect(connstring)
+    conn = connect_nice(admin_connstring)
 
     conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
     g2d = Gpx2db(conn)
-
-    g2d.init_db(drop=False)
+    schema = args.schema or 'public'
+    g2d.create_schema(schema)
 
 # --------------------------------
 
 
 def a_parse():
+    """
+    We have several subcommands
+
+      cd - create a new db ( and drop existing db with same name )
+
+      cs - create a new schema on existing db
+
+      cu - create a user with write privileges on given schema in db
+
+    Global parameters
+        host, port, user, password
+
+    """
     parser = argparse.ArgumentParser(
         description=(
-            'Create a new trackmanager database'
-        ),
-        parents=[getDbParentParser()])
-
-    parser.add_argument('database')
+            'Create a new trackmanager database, schema or user'
+        ))
 
     parser.add_argument(
         '-d',
@@ -53,6 +69,53 @@ def a_parse():
         action='store_true',
         help="Enable debug output"
     )
+
+    parser.add_argument(
+        '-n',
+        '--host',
+        help="Database Host")
+
+    parser.add_argument(
+        '--port',
+        help="Database Port")
+
+    parser.add_argument(
+        '-u',
+        '--user',
+        help=(
+            "User to authenticate to db. "
+            "This user should have privilege to create databases and users"))
+
+    parser.add_argument(
+        '-p',
+        '--password',
+        help="Password to authenticate to DB")
+
+    # ---
+
+    subparsers = parser.add_subparsers(
+        help="Provide <subcommand> -h for further help.",
+        required=True,
+        )
+
+    parser_cd = subparsers.add_parser('cd', help='Create database subcommand')
+    parser_cd.add_argument('database')
+
+    # ---
+    parser_cs = subparsers.add_parser('cs', help='Create schema subcommand')
+    parser_cs.add_argument(
+        'schema',
+        help="Database Schema (Do not use 'public')")
+
+    # ---
+    parser_cu = subparsers.add_parser('cu', help='Create user subcommand')
+    parser_cu.add_argument(
+        'username',
+        help="Name of database user for new database to be created")
+    parser_cu.add_argument(
+        'userpassword',
+        help="Password for new database user")
+
     args = parser.parse_args()
 
     return args

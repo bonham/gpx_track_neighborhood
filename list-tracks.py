@@ -1,11 +1,9 @@
-import sys
-import re
 import argparse
-import psycopg2 as pg2
 from gpx2db.utils import (
     setup_logging,
     getDbParentParser,
-    create_connection_string)
+    create_connection_string,
+    connect_nice)
 
 
 def main():
@@ -14,21 +12,11 @@ def main():
     args = a_parse()
 
     logger = setup_logging(args.debug)
+    logger.debug("Starting")
 
     connstring = create_connection_string(args.database, args)
 
-    try:
-
-        conn = pg2.connect(connstring)
-
-    except pg2.OperationalError as e:
-        errmsg = e.args[0]
-        if re.search(r'database .* does not exist', errmsg):
-            logger.error(
-                "Database {} does not exist.")
-            sys.exit(1)
-        else:
-            raise
+    conn = connect_nice(connstring)
 
     sql = 'select id, src, name from tracks order by id'
     cur = conn.cursor()

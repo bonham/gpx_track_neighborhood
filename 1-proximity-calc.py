@@ -1,22 +1,20 @@
 import os
-import sys
-import re
 import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
-    drop_db, setup_logging,
+    setup_logging,
     vac, getfiles, getDbParentParser,
-    create_connection_string)
-from gpx2db.proximity_calc import Transform
+    create_connection_string,
+    connect_nice)
+from gpx2db.proximity_calc import (
+    Transform,
+    RADIUS_DEFAULT,
+    TRACKS_TABLE,
+    TRACKPOINTS_TABLE)
 from gpx2db.gpximport import GpxImport
-from gpx2db.gpx2dblib import Gpx2db
-
 
 # constants
 PG_USER = "postgres"
-RADIUS_DEFAULT = 30
-TRACKS_TABLE = "tracks"
-TRACKPOINTS_TABLE = "track_points"
 
 
 def main():
@@ -32,42 +30,15 @@ def main():
     gpx_filelist = getfiles(args.dir_or_file)
     logger.info("Number of gpx files: {}".format(len(gpx_filelist)))
 
-    if args.createdb:
-        logger.info("(Re-) creating database {}".format(database_name))
-    else:
-        logger.info("Appending to database {}".format(database_name))
+    logger.info("Appending to database {}".format(database_name))
 
-    if args.createdb:
-        drop_db(database_name, args)
-
-#    gpximport(gpx_filelist, database_name, args.createdb,
-#              host, db_user, password, dbport)
     # connect to newly created db
-    try:
-        conn = pg2.connect(connstring)
-    except pg2.OperationalError as e:
-        errmsg = e.args[0]
-        if re.search(r'database .* does not exist', errmsg):
-            logger.error(
-                "Database {} does not exist. "
-                "Use the --create flag or choose existing DB")
-            sys.exit(1)
-        else:
-            print(re)
-            print(e)
-            raise
-
+    conn = connect_nice(connstring)
     conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
-    g2d = Gpx2db(conn)
-
-    # TODO: move database initialization up
-    if args.createdb:
-        g2d.init_db(drop=True)
-
     # connection for vacuum
-    conn_vac = pg2.connect(connstring)
+    conn_vac = connect_nice(connstring)
     conn_vac.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
     vac(conn_vac, TRACKS_TABLE)
@@ -75,10 +46,7 @@ def main():
 
     transform = Transform(conn)
 
-    logger.info("Create tables and idexes")
-
-    if args.createdb:
-        transform.create_structure()
+    logger.info("Create tables and indexes")
 
     # Loop over files and import
     gpximp = GpxImport(conn)
@@ -155,12 +123,6 @@ def a_parse():
             "Default is {}m").format(
             RADIUS_DEFAULT), default=RADIUS_DEFAULT)
 
-    parser.add_argument(
-        '--createdb',
-        action='store_true',
-        help=(
-            "Create the database. If it does already exist, "
-            "the old db will be overwritten!"))
     parser.add_argument(
         '-d',
         '--debug',

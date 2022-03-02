@@ -63,7 +63,7 @@ def gpxpy_bigiterator(request):
     yield r
 
 
-#pytest_plugins = ['pytest_profiling']
+# pytest_plugins = ['pytest_profiling']
 
 
 class TestGpx2Db:
@@ -71,14 +71,13 @@ class TestGpx2Db:
     def test1(self, dbconn, gpxpy_obj):
 
         g2d = Gpx2db(dbconn)
-        g2d.init_db(drop=True)
+        g2d.create_schema('public')
         g2d.load_gpx_file(gpxpy_obj(1), src="file1")
         g2d.load_gpx_file(gpxpy_obj(1), src="file2")
 
     def test_big(self, dbconn, gpxpy_bigiterator):
 
         g2d = Gpx2db(dbconn)
-        # g2d.init_db(drop=True)
 
         (fname, gpx_obj) = gpxpy_bigiterator
         g2d.load_gpx_file(gpx_obj, src=fname)

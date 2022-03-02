@@ -1,12 +1,12 @@
 import argparse
 import os
-import psycopg2
 import json
 import shutil
 from gpx2db.utils import (
     setup_logging,
     getDbParentParser,
-    create_connection_string
+    create_connection_string,
+    connect_nice
 )
 
 # constants
@@ -28,7 +28,7 @@ def main():
     connstring = create_connection_string(args.database, args)
 
     # connect to db
-    conn = psycopg2.connect(connstring)
+    conn = connect_nice(connstring)
     cur = conn.cursor()
 
     outputDir = args.dataset_label

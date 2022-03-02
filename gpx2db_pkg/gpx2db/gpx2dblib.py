@@ -16,15 +16,21 @@ class Gpx2db:
         self.conn = database_connection
         self.cur = self.conn.cursor()
 
-    def init_db(self, drop=False):
+    def create_schema(self, schema):
         "Create necessary sequences and tables"
-
-        self.check_create_extension()
-
-        if drop:
-            self.drop_objects()
-
+        logger.debug("Create schema {}".format(schema))
         cur = self.cur
+
+        # create schema
+        logger.debug("Schema variable: {}".format(schema))
+        if schema != 'public':
+            logger.debug("Creating schema")
+            schema_sql = 'create schema {}'.format(schema)
+            cur.execute(schema_sql)
+            self.commit()
+
+        logger.debug("Create schema {}".format(schema))
+        self.check_create_extension(schema)
 
         self.create_sequence(self.tracks_id_sequence)
         self.create_sequence(self.track_points_id_sequence)
@@ -109,15 +115,13 @@ class Gpx2db:
     def commit(self):
         self.conn.commit()
 
-    def check_create_extension(self):
-
+    def check_create_extension(self, schema):
+        logger.debug("Creating extension postgis in schema {}".format(schema))
         self.cur.execute(
-            "SELECT extname FROM pg_extension where extname = 'postgis'")
-        r = self.cur.fetchall()
-
-        if len(r) == 0:
-            self.cur.execute("create extension postgis")
-            self.commit()
+            "create extension "
+            "postgis with schema {}".format(schema)
+            )
+        self.commit()
 
     def create_sequence(self, sequence_name):
 

@@ -2,6 +2,10 @@ import os
 from .utils import ExecuteSQLFile, read_snip_coords
 import logging
 
+RADIUS_DEFAULT = 30
+TRACKS_TABLE = "tracks"
+TRACKPOINTS_TABLE = "track_points"
+
 
 class Transform:
 

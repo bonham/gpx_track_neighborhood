@@ -1,5 +1,5 @@
 import pytest
-from mock import Mock
+from unittest.mock import Mock
 from gpx2db import Gpx2db
 import gpxpy
 from os import path, environ

@@ -1,6 +1,6 @@
 {
   "python.testing.pytestArgs": [
-    "gpx2db_pkg/tests"
+    "python"
   ],
   "python.testing.unittestEnabled": false,
   "python.testing.nosetestsEnabled": false,

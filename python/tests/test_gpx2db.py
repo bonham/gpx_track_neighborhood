@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock
-from gpx2db import Gpx2db
+from gpx2db.gpx2dblib import Gpx2db
 import gpxpy
 from os import path, environ
 import psycopg2 as pg2
@@ -49,7 +49,8 @@ def gpxpy_obj():
     return gpx_creator
 
 
-@ pytest.fixture(params=glob.glob('C:/Users/Michael/poc/gisprojekt/tracks/db2020/*.gpx'))
+@ pytest.fixture(
+    params=glob.glob('C:/Users/Michael/poc/gisprojekt/tracks/db2020/*.gpx'))
 def gpxpy_bigiterator(request):
     "This only works if directory is present"
     "Returns iterator which yields list of gpxpy objs"
@@ -72,8 +73,8 @@ class TestGpx2Db:
 
         g2d = Gpx2db(dbconn)
         g2d.create_schema('public')
-        g2d.load_gpx_file(gpxpy_obj(1), src="file1")
-        g2d.load_gpx_file(gpxpy_obj(1), src="file2")
+        g2d.load_gpx_file(gpxpy_obj(1), "fakehash1", src="file1")
+        g2d.load_gpx_file(gpxpy_obj(1), "fakehash2", src="file2")
 
     def test_big(self, dbconn, gpxpy_bigiterator):
 

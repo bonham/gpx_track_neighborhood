@@ -1,6 +1,10 @@
 {
   "python.testing.pytestArgs": [
-    "python"
+    "--cov=src",
+    "--cov-report",
+    "html",
+    "tests"
+    
   ],
   "python.testing.unittestEnabled": false,
   "python.testing.nosetestsEnabled": false,
@@ -10,5 +14,7 @@
   "search.exclude": {
     "**/venv": true
   },
-  "python.linting.pylintEnabled": false
+  "python.linting.pylintEnabled": false,
+  "python.testing.cwd": "${workspaceFolder}/python/",
+  "markiscodecoverage.searchCriteria": "${workspaceFolder}/python/.coverage"
 }

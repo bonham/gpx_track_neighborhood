@@ -10,3 +10,4 @@ __pycache__
 *.prof
 .vscode/launch.json
 localfiles
+python/.coverage

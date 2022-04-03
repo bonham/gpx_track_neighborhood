@@ -1,13 +1,8 @@
 {
   "python.testing.pytestArgs": [
-    "--cov=src",
-    "--cov-report",
-    "html",
     "tests"
-    
   ],
   "python.testing.unittestEnabled": false,
-  "python.testing.nosetestsEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.linting.flake8Enabled": true,
   "python.linting.enabled": true,
@@ -16,5 +11,4 @@
   },
   "python.linting.pylintEnabled": false,
   "python.testing.cwd": "${workspaceFolder}/python/",
-  "markiscodecoverage.searchCriteria": "${workspaceFolder}/python/.coverage"
 }

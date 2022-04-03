@@ -11,3 +11,4 @@ __pycache__
 .vscode/launch.json
 localfiles
 python/.coverage
+python/htmlcov

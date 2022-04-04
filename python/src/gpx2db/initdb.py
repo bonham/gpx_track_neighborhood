@@ -20,28 +20,46 @@ def main():
 
     # parse args
     args = a_parse()
-    database_name = args.database
 
     logger = setup_logging(args.debug)
     logger.debug("Logger initialized")
+
+    # admin_connstring = create_connection_string(PG_ADMIN_DB, args)
+    # conn = connect_nice(admin_connstring)
+
+    # conn.set_isolation_level(
+    #     pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
+
+    args.func(args)
+# --------------------------------
+
+
+def subcommand_cd(args):
+
     admin_connstring = create_connection_string(PG_ADMIN_DB, args)
     conn = connect_nice(admin_connstring)
 
-    if args.create:
-        drop_db(database_name, admin_connstring)
-        create_db(database_name, admin_connstring)
+    conn.set_isolation_level(
+        pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
-    # connect to newly created db
+    drop_db(args.database, admin_connstring)
+    create_db(args.database, admin_connstring)
+
+
+def subcommand_cs(args):
+    admin_connstring = create_connection_string(PG_ADMIN_DB, args)
     conn = connect_nice(admin_connstring)
 
     conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
     g2d = Gpx2db(conn)
-    schema = args.schema or 'public'
+    schema = args.schema
     g2d.create_schema(schema)
 
-# --------------------------------
+
+def subcommand_cu():
+    pass
 
 
 def a_parse():
@@ -100,12 +118,14 @@ def a_parse():
 
     parser_cd = subparsers.add_parser('cd', help='Create database subcommand')
     parser_cd.add_argument('database')
+    parser_cd.set_defaults(func=subcommand_cd)
 
     # ---
     parser_cs = subparsers.add_parser('cs', help='Create schema subcommand')
     parser_cs.add_argument(
         'schema',
         help="Database Schema (Do not use 'public')")
+    parser_cs.set_defaults(func=subcommand_cs)
 
     # ---
     parser_cu = subparsers.add_parser('cu', help='Create user subcommand')
@@ -115,6 +135,7 @@ def a_parse():
     parser_cu.add_argument(
         'userpassword',
         help="Password for new database user")
+    parser_cu.set_defaults(func=subcommand_cu)
 
     args = parser.parse_args()
 

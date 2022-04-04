@@ -168,9 +168,6 @@ def getDbParentParser():
     databaseArgParser.add_argument(
         '--port',
         help="Database Port")
-    databaseArgParser.add_argument(
-        '--schema',
-        help="Database Schema (Default is public)")
 
     return databaseArgParser
 
@@ -229,9 +226,6 @@ def create_connection_string(database_name, args):
 
     if args.port:
         connstring += " port=" + args.port
-
-    if args.schema:
-        connstring += " options='-c search_path={}'".format(args.schema)
 
     logger.debug("Connection string: {}".format(connstring))
     return connstring

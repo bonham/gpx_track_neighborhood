@@ -24,14 +24,7 @@ def main():
     logger = setup_logging(args.debug)
     logger.debug("Logger initialized")
 
-    # admin_connstring = create_connection_string(PG_ADMIN_DB, args)
-    # conn = connect_nice(admin_connstring)
-
-    # conn.set_isolation_level(
-    #     pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
-
     args.func(args)
-# --------------------------------
 
 
 def subcommand_cd(args):
@@ -123,8 +116,11 @@ def a_parse():
     # ---
     parser_cs = subparsers.add_parser('cs', help='Create schema subcommand')
     parser_cs.add_argument(
+        "database",
+        help="Database where schema should be created")
+    parser_cs.add_argument(
         'schema',
-        help="Database Schema (Do not use 'public')")
+        help="Database Schema to be created (Do not use 'public')")
     parser_cs.set_defaults(func=subcommand_cs)
 
     # ---

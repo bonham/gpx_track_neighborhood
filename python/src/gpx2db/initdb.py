@@ -40,7 +40,7 @@ def subcommand_cd(args):
 
 
 def subcommand_cs(args):
-    admin_connstring = create_connection_string(PG_ADMIN_DB, args)
+    admin_connstring = create_connection_string(args.database, args)
     conn = connect_nice(admin_connstring)
 
     conn.set_isolation_level(

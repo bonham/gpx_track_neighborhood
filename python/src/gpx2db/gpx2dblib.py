@@ -30,7 +30,7 @@ class Gpx2db:
             self.commit()
 
         logger.debug("Create schema {}".format(schema))
-        self.check_create_extension(schema)
+        self.check_create_extension()
 
         self.create_sequence(self.tracks_id_sequence)
         self.create_sequence(self.track_points_id_sequence)
@@ -115,13 +115,20 @@ class Gpx2db:
     def commit(self):
         self.conn.commit()
 
-    def check_create_extension(self, schema):
-        logger.debug("Creating extension postgis in schema {}".format(schema))
-        self.cur.execute(
-            "create extension "
-            "postgis with schema {}".format(schema)
-            )
-        self.commit()
+    def check_create_extension(self):
+        # TODO: check if extension already there
+
+        with self.conn.cursor() as curs:
+            curs.execute(
+                "SELECT extname FROM pg_extension where extname = 'postgis'")
+            if (curs.rowcount == 0):
+
+                logger.debug("Creating extension postgis in public schema")
+                curs.execute(
+                    "create extension "
+                    "postgis"
+                    )
+                self.commit()
 
     def create_sequence(self, sequence_name):
 

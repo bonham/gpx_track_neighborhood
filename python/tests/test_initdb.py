@@ -19,5 +19,3 @@ def test_initdb_cs(monkeypatch):
     monkeypatch.setattr("gpx2db.initdb.connect_nice", Mock())
     monkeypatch.setattr("gpx2db.initdb.Gpx2db", Mock())
     initdb.main()
-
-    

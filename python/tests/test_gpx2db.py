@@ -16,11 +16,15 @@ def dbconn():
     mocking = True
 
     if mocking:
-        conn = Mock()
+        conn = Mock(name="mockconn")
+        cursor = Mock(name="mockcur")
+        cursor.return_value.__enter__ = Mock(name="mockenterfunc")
+        cursor.return_value.__exit__ = Mock(name="exitfunc")
         row1 = (1, 'peter')
         row2 = (2, 'paul')
-        conn.cursor.return_value.fetchall.return_value = [row1, row2]
-        conn.cursor.return_value.fetchone.return_value = row1
+        cursor.return_value.fetchall.return_value = [row1, row2]
+        cursor.return_value.fetchone.return_value = row1
+        conn.cursor = cursor
         return conn
 
     else:
@@ -73,6 +77,13 @@ class TestGpx2Db:
 
         g2d = Gpx2db(dbconn)
         g2d.create_schema('public')
+
+        executefunc = g2d.cur.execute
+
+        for i, v in enumerate(executefunc.call_args_list):
+            sql = v.args[0]
+            assert "CREATE" in sql.upper()
+
         g2d.load_gpx_file(gpxpy_obj(1), "fakehash1", src="file1")
         g2d.load_gpx_file(gpxpy_obj(1), "fakehash2", src="file2")
 

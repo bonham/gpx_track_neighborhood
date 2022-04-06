@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 class Gpx2db:
 
-    def __init__(self, database_connection):
+    def __init__(self, database_connection, schema):
 
         self.tracks_table = "tracks"
         self.tracks_id_sequence = "tracks_id"
@@ -15,9 +15,14 @@ class Gpx2db:
 
         self.conn = database_connection
         self.cur = self.conn.cursor()
+        if schema.upper() == 'PUBLIC':
+            raise RuntimeError("Public schema not allowed")
 
-    def create_schema(self, schema):
+        self.schema = schema
+
+    def create_schema(self):
         "Create necessary sequences and tables"
+        schema = self.schema
         logger.debug("Create schema {}".format(schema))
         cur = self.cur
 
@@ -36,7 +41,7 @@ class Gpx2db:
         self.create_sequence(self.track_points_id_sequence)
 
         sql_create_tracks_table = """
-            create table {}
+            create table {}.{}
             (
             id integer PRIMARY KEY,
             name varchar(2000),
@@ -49,19 +54,21 @@ class Gpx2db:
             wkb_geometry geometry(MultiLineString,4326)
             )
         """.format(
+            self.schema,
             self.tracks_table
         )
         cur.execute(sql_create_tracks_table)
         self.commit()
 
         sql_create_segments_table = """
-            create table {}
+            create table {0}.{1}
             (
-            track_id integer REFERENCES {} (id),
+            track_id integer REFERENCES {0}.{2} (id),
             track_segment_id integer NOT NULL,
             unique ( track_id, track_segment_id )
             )
         """.format(
+            self.schema,
             self.segments_table,
             self.tracks_table
         )
@@ -69,10 +76,10 @@ class Gpx2db:
         self.commit()
 
         sql_create_points_table = """
-            create table {}
+            create table {0}.{1}
             (
-            id integer PRIMARY KEY DEFAULT nextval('{}'::regclass),
-            track_id integer REFERENCES {} (id),
+            id integer PRIMARY KEY DEFAULT nextval('{0}.{2}'::regclass),
+            track_id integer REFERENCES {0}.{3} (id),
             track_segment_id integer not null,
             segment_point_id integer not null,
             elevation double precision,
@@ -80,6 +87,7 @@ class Gpx2db:
             unique ( track_id, track_segment_id, segment_point_id )
             )
         """.format(
+            self.schema,
             self.track_points_table,
             self.track_points_id_sequence,
             self.tracks_table
@@ -96,14 +104,14 @@ class Gpx2db:
             self.tracks_table,
         ]
         table_drop_commands = [
-            "drop table if exists {}".format(i) for i in tables]
+            "drop table if exists {}.{}".format(self.schema, i) for i in tables]
 
         sequences = [
             self.tracks_id_sequence,
             self.track_points_id_sequence
         ]
         sequence_drop_commands = [
-            "drop sequence if exists {}".format(i) for i in sequences]
+            "drop sequence if exists {}.{}".format(self.schema, i) for i in sequences]
 
         for sql in (table_drop_commands + sequence_drop_commands):
             try:
@@ -132,13 +140,17 @@ class Gpx2db:
 
     def create_sequence(self, sequence_name):
 
-        sql = "CREATE SEQUENCE {}".format(sequence_name)
+        sql = "CREATE SEQUENCE {}.{}".format(
+            self.schema,
+            sequence_name)
         self.cur.execute(sql)
         self.commit()
 
     def get_nextval(self, sequence):
 
-        sql = "select nextval('{}')".format(sequence)
+        sql = "select nextval('{}.{}')".format(
+            self.schema,
+            sequence)
         self.cur.execute(sql)
         row = self.cur.fetchone()
         return row[0]
@@ -182,7 +194,8 @@ class Gpx2db:
         return track_ids_created
 
     def store_segment(self, track_id, segment_num):
-        sql = "insert into {} values ({},{})".format(
+        sql = "insert into {}.{} values ({},{})".format(
+            self.schema,
             self.segments_table,
             track_id,
             segment_num
@@ -212,10 +225,11 @@ class Gpx2db:
                 return "'{}'".format(s)
 
         sql = """
-            insert into {}
+            insert into {}.{}
             (id, name, hash, src, time, timelength)
             values({},{},{},{},{},{})
         """.format(
+            self.schema,
             self.tracks_table,
             rowid,
             wrapquotes(name),
@@ -229,12 +243,13 @@ class Gpx2db:
     def store_points(self, storelist):
 
         sql = (
-            "insert into {} "
+            "insert into {}.{} "
             "  ("
             "       track_id, track_segment_id,"
             "       segment_point_id, elevation, wkb_geometry"
             "  )"
             "  values ").format(
+            self.schema,
             self.track_points_table
         )
 
@@ -292,9 +307,10 @@ class Gpx2db:
 
         # else update table
         sql = """
-            update tracks
+            update {}.tracks
             set  time = '{}'  where id = {}
             """.format(
+                self.schema,
                 alternate_time,
                 track_id
             )
@@ -305,32 +321,32 @@ class Gpx2db:
         sql = """
             with base as (
                 select ST_MakeLine(wkb_geometry order by id) as wkb_geometry
-                from track_points where track_id = {0}
+                from {1}.track_points where track_id = {0}
             )
-            update tracks set wkb_geometry = subquery.wkb_geometry from (
+            update {1}.tracks set wkb_geometry = subquery.wkb_geometry from (
                 select ST_Collect(wkb_geometry) as wkb_geometry
                 from base
             ) as subquery
             where id = {0}
-        """.format(track_id)
+        """.format(track_id, self.schema)
 
         self.cur.execute(sql)
 
     def track_update_length(self, track_id):
 
         sql = """
-            update tracks
+            update {1}.tracks
                 set length = subquery.length
             from (
                 select
                     id,
                     ST_Length(wkb_geometry::geography) as length
-                from tracks
+                from {1}.tracks
             ) as subquery
             where
                 subquery.id = {0} and
                 tracks.id = {0}
-        """.format(track_id)
+        """.format(track_id, self.schema)
 
         self.cur.execute(sql)
 
@@ -347,13 +363,13 @@ class Gpx2db:
                             track_id,
                             track_segment_id
                             order by id) as diff
-                from track_points
+                from {1}.track_points
                 where
                     track_points.elevation != 0
                     and track_id = {0}
                 order by id
             )
-            update tracks
+            update {1}.tracks
                 set ascent = subquery.ascent
             from (
                 select
@@ -364,6 +380,6 @@ class Gpx2db:
             ) as subquery
             where tracks.id = {0}
             and subquery.track_id = {0}
-        """.format(track_id)
+        """.format(track_id, self.schema)
 
         self.cur.execute(sql)

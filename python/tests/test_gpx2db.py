@@ -73,16 +73,16 @@ def gpxpy_bigiterator(request):
 
 class TestGpx2Db:
     # @pytest.mark.skip
-    def test1(self, dbconn, gpxpy_obj):
+    def test_create_schema(self, dbconn, gpxpy_obj):
 
-        g2d = Gpx2db(dbconn)
-        g2d.create_schema('public')
+        g2d = Gpx2db(dbconn, "MYSCHEMA")
+        g2d.create_schema()
 
         executefunc = g2d.cur.execute
 
         for i, v in enumerate(executefunc.call_args_list):
             sql = v.args[0]
-            assert "CREATE" in sql.upper()
+            assert "MYSCHEMA" in sql.upper()
 
         g2d.load_gpx_file(gpxpy_obj(1), "fakehash1", src="file1")
         g2d.load_gpx_file(gpxpy_obj(1), "fakehash2", src="file2")

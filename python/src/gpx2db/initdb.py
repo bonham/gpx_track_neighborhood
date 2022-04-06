@@ -46,9 +46,9 @@ def subcommand_cs(args):
     conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
-    g2d = Gpx2db(conn)
     schema = args.schema
-    g2d.create_schema(schema)
+    g2d = Gpx2db(conn, schema)
+    g2d.create_schema()
 
 
 def subcommand_cu():

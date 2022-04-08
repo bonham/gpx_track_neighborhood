@@ -104,14 +104,18 @@ class Gpx2db:
             self.tracks_table,
         ]
         table_drop_commands = [
-            "drop table if exists {}.{}".format(self.schema, i) for i in tables]
+            "drop table if exists {}.{}".format(
+                self.schema, i) for i in tables
+                ]
 
         sequences = [
             self.tracks_id_sequence,
             self.track_points_id_sequence
         ]
         sequence_drop_commands = [
-            "drop sequence if exists {}.{}".format(self.schema, i) for i in sequences]
+            "drop sequence if exists {}.{}".format(
+                self.schema, i
+                ) for i in sequences]
 
         for sql in (table_drop_commands + sequence_drop_commands):
             try:

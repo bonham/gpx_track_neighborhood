@@ -1,8 +1,8 @@
 --- tables and views for transforming points
 
 --- 1/4: Joining segments nearby:
-drop table if exists joined_points cascade;
-create table joined_points
+drop table if exists {schema}.joined_points cascade;
+create table {schema}.joined_points
 (
     point_id integer not NULL,
     track_id integer not null,
@@ -11,17 +11,17 @@ create table joined_points
     wkb_geometry geometry(Point,4326) not null,
     constraint joined_points_pk primary key (point_id )
 );
-create index joined_points_seg_idx on joined_points(segment_id);
-create index joined_points_tr_idx on joined_points(track_id);
+create index joined_points_seg_idx on {schema}.joined_points(segment_id);
+create index joined_points_tr_idx on {schema}.joined_points(track_id);
 CREATE INDEX joined_points_geom_idx
-    ON joined_points USING gist(wkb_geometry);
+    ON {schema}.joined_points USING gist(wkb_geometry);
 
 --- sequences
-drop sequence if exists joinsegments_seq;
-create sequence joinsegments_seq;
+drop sequence if exists {schema}.joinsegments_seq;
+create sequence {schema}.joinsegments_seq;
 
 --- View 2/4: Simplifying the track:
-create or replace view simplified_segments as
+create or replace view {schema}.simplified_segments as
 SELECT
     segment_id,
     track_id,
@@ -29,13 +29,13 @@ SELECT
           ST_MakeLine(wkb_geometry order by point_id),
           0.00001
       ) as wkb_geometry
-from joined_points
+from {schema}.joined_points
 group by
     track_id,
     segment_id
 ;
 
-create or replace view simplified_points as
+create or replace view {schema}.simplified_points as
 select
     row_number() over (order by segment_id, segment_point_number) as tmp_id,
     track_id, segment_id, segment_point_number, wkb_geometry
@@ -45,14 +45,14 @@ from (
         segment_id,
         (ST_DumpPoints(wkb_geometry)).path[1] as segment_point_number,
         (ST_DumpPoints(wkb_geometry)).geom as wkb_geometry
-    from simplified_segments
+    from {schema}.simplified_segments
 ) as base
 
 ;
 
 --- 3/4 View: fill gaps between points
 
-create or replace view enriched_points as
+create or replace view {schema}.enriched_points as
 --- three layers to interpolate between simplified points
 --- ( read from bottom up )
 
@@ -104,7 +104,7 @@ from (
           partition by segment_id
           order by segment_id, segment_point_number) as nextpoint
       FROM
-        simplified_points
+        {schema}.simplified_points
     ) as base1
   ) as base2
 ) as base3
@@ -112,8 +112,8 @@ from (
 
 
 --- 4/4: Table Final result
-drop table if exists newpoints cascade;
-create table newpoints
+drop table if exists {schema}.newpoints cascade;
+create table {schema}.newpoints
 (
     point_id integer not NULL,
     segment_id integer not null,
@@ -121,27 +121,27 @@ create table newpoints
     wkb_geometry geometry(Point,4326) not null,
     constraint newpoints_pk primary key (point_id )
 );
-create index newpoints_seg_idx on newpoints(segment_id);
-create index newpoints_tr_idx on newpoints(track_id);
+create index newpoints_seg_idx on {schema}.newpoints(segment_id);
+create index newpoints_tr_idx on {schema}.newpoints(track_id);
 CREATE INDEX newpoints_geom_idx
-    ON newpoints USING gist(wkb_geometry);
+    ON {schema}.newpoints USING gist(wkb_geometry);
 
 --- newpoints sequences
-drop sequence if exists newpoints_seq;
-create sequence newpoints_seq;
+drop sequence if exists {schema}.newpoints_seq;
+create sequence {schema}.newpoints_seq;
 
 
 -- 5/4 ;-) View: statistics view
-create or replace view track_processing_stats as
+create or replace view {schema}.track_processing_stats as
 select * from (
-	select '1-track_points' as phase, track_id, count(track_id) from track_points group by track_id
+	select '1-track_points' as phase, track_id, count(track_id) from {schema}.track_points group by track_id
 	union all
-	select '3-simplified_points' as phase, track_id, count(track_id) from simplified_points
+	select '3-simplified_points' as phase, track_id, count(track_id) from {schema}.simplified_points
 	group by track_id
 	union all
-	select '2-joined_points' as phase, track_id, count(track_id) from joined_points group by track_id
+	select '2-joined_points' as phase, track_id, count(track_id) from {schema}.joined_points group by track_id
 	union all
-	select '4-newpoints' as phase, track_id, count(track_id) from newpoints group by track_id
+	select '4-newpoints' as phase, track_id, count(track_id) from {schema}.newpoints group by track_id
 
 ) as base
 order by track_id, phase

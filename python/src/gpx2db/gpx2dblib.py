@@ -15,8 +15,8 @@ class Gpx2db:
 
         self.conn = database_connection
         self.cur = self.conn.cursor()
-        if schema.upper() == 'PUBLIC':
-            raise RuntimeError("Public schema not allowed")
+        # if schema.upper() == 'PUBLIC':
+        #     raise RuntimeError("Public schema not allowed")
 
         self.schema = schema
 

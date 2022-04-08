@@ -1,5 +1,5 @@
-drop view if exists count_ml_consecutive;
-create view count_ml_consecutive as
+drop view if exists {schema}.count_ml_consecutive;
+create view {schema}.count_ml_consecutive as
 select 	
 		circle_id,
 		count(*) filter(where( not ST_Endpoint(lastgeom) = ST_Startpoint(geom)))  + 1 as num
@@ -20,7 +20,7 @@ from (
 			(ST_Dump(wkb_geometry)).path[1],
 			(ST_Dump(wkb_geometry)).geom
 		from
-			intersections_gtype ig
+			{schema}.intersections_gtype ig
 		where
 			ig.geom_type = 'ST_MultiLineString'
 		order by

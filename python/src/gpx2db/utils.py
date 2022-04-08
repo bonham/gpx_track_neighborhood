@@ -13,9 +13,10 @@ PG_ADMIN_DB = 'postgres'
 
 class ExecuteSQLFile:
 
-    def __init__(self, connection, base_dir=''):
+    def __init__(self, connection, base_dir='', schema=None):
 
         self.base_dir = base_dir
+        self.schema = schema
 
         self.conn = connection
         self.cur = connection.cursor()
@@ -35,7 +36,7 @@ class ExecuteSQLFile:
         with open(fpath, "r") as f:
             sqltemplate = f.read()
             logging.debug("Args: {}".format(args))
-            sql = sqltemplate.format(*args)
+            sql = sqltemplate.format(schema=self.schema, *args)
             logging.debug(sql)
             self.cursor().execute(sql, sqlArgs)
 

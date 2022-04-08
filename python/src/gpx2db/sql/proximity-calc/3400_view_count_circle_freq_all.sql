@@ -1,5 +1,5 @@
-drop view if exists count_circle_freq_all;
-create view count_circle_freq_all as
+drop view if exists {schema}.count_circle_freq_all;
+create view {schema}.count_circle_freq_all as
 SELECT
   circle_id,
   sum(num) as freq
@@ -8,6 +8,6 @@ from (
   from count_ls
   UNION ALL
   select *
-  from count_ml_consecutive
+  from {schema}.count_ml_consecutive
 ) as unioncount
 group by circle_id

@@ -1,4 +1,4 @@
-insert into newpoints (
+insert into {schema}.newpoints (
   point_id,
   segment_id,
   track_id,
@@ -10,7 +10,7 @@ SELECT
   track_id,
   wkb_geometry
 FROM
-  enriched_points
+  {schema}.enriched_points
 where track_id = {}
 order by
   segment_id,

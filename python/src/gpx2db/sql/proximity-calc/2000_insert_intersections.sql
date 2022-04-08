@@ -1,6 +1,6 @@
 -- intersect circles and points
 -- The ST_Intersects() clause will use gist index
-insert into circle_segment_intersections (
+insert into {schema}.circle_segment_intersections (
   circle_id,
   segment_id,
   wkb_geometry
@@ -15,9 +15,9 @@ insert into circle_segment_intersections (
       ci.wkb_geometry as ci_geom,
       se.wkb_geometry as se_geom
     from
-      newpoints np,
-      circles as ci,
-      newsegments as se
+      {schema}.newpoints np,
+      {schema}.circles as ci,
+      {schema}.newsegments as se
     where
       np.point_id = ci.circle_id
       and

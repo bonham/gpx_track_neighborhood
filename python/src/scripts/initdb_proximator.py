@@ -23,7 +23,7 @@ def main():
     conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
     # TODO: check where we do vacuuming
-    transform = Transform(conn)
+    transform = Transform(conn, args.schema)
     transform.create_structure()
 
 
@@ -35,6 +35,7 @@ def a_parse():
         parents=[getDbParentParser()])
 
     parser.add_argument('database')
+    parser.add_argument('schema')
 
     parser.add_argument(
         '-d',

@@ -1,6 +1,6 @@
 -- a view which splits up paths of multilinestring intersections
-drop view if exists intersections_multiline_paths;
-create view intersections_multiline_paths as
+drop view if exists {schema}.intersections_multiline_paths;
+create view {schema}.intersections_multiline_paths as
 select 
 	row_number() over (order by circle_id, segment_id, path) as ml_id,
 	circle_id,
@@ -14,14 +14,14 @@ from (
 		(ST_Dump(wkb_geometry)).path[1],
 		(ST_Dump(wkb_geometry)).geom as wkb_geometry
 	from
-		intersections_gtype
+		{schema}.intersections_gtype
 	where
 		intersections_gtype.geom_type = 'ST_MultiLineString'
 ) as base;
 
 -- a view which counts consecutive paths (debug view)
-drop view if exists count_ml_debug;
-create view count_ml_debug as
+drop view if exists {schema}.count_ml_debug;
+create view {schema}.count_ml_debug as
 select 	
 		circle_id,
 		segment_id,
@@ -47,7 +47,7 @@ from (
 			(ST_Dump(wkb_geometry)).path[1],
 			(ST_Dump(wkb_geometry)).geom
 		from
-			intersections_gtype ig
+			{schema}.intersections_gtype ig
 		where
 			ig.geom_type = 'ST_MultiLineString'
 		order by

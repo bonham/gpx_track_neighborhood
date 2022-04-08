@@ -9,13 +9,18 @@ TRACKPOINTS_TABLE = "track_points"
 
 class Transform:
 
-    def __init__(self, conn):
+    def __init__(self, conn, schema):
 
         self.conn = conn
+        self.schema = schema
 
         sqldir = os.path.join(os.path.dirname(
             __file__), 'sql', 'proximity-calc')
-        self.executor = ExecuteSQLFile(conn, base_dir=sqldir)
+        self.executor = ExecuteSQLFile(
+            conn,
+            base_dir=sqldir,
+            schema=self.schema,
+            )
         self.logger = logging.getLogger(__name__)
 
     def create_structure(self):

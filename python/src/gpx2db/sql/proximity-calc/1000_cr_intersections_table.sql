@@ -1,5 +1,5 @@
-drop table if exists circle_segment_intersections cascade;
-create table circle_segment_intersections (
+drop table if exists {schema}.circle_segment_intersections cascade;
+create table {schema}.circle_segment_intersections (
   circle_id integer not null,
   segment_id integer not null,
   wkb_geometry geometry(Geometry,4326), -- can be null

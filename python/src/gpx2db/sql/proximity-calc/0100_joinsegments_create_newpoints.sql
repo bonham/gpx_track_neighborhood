@@ -1,11 +1,11 @@
 --- walk through all points, join segments of same tracks which are not far apart
 --- by inserting points into segments and renumber the segment id
 
-insert into joined_points
+insert into {schema}.joined_points
 with clipped_points as (
 	SELECT
 		*
-	FROM track_points tp
+	FROM {schema}.track_points tp
 	where
 		{}
 ),
@@ -33,7 +33,7 @@ select
     	else null 
     end as marker,
     tp1.wkb_geometry
-from clipped_points tp1 left join clipped_points tp2
+from {schema}.clipped_points tp1 left join {schema}.clipped_points tp2
 on
     tp1.id = tp2.id + 1 -- vergleiche mit vorhergehendem punkt
 where

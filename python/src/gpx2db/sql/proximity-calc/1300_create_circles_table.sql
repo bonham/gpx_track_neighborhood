@@ -1,6 +1,6 @@
-DROP TABLE if exists circles;
+DROP TABLE if exists {schema}.circles;
 
-CREATE TABLE circles
+CREATE TABLE {schema}.circles
 (
     circle_id integer NOT NULL,
     wkb_geometry geometry(Polygon,4326),
@@ -8,5 +8,5 @@ CREATE TABLE circles
 );
 
 CREATE INDEX circles_wkb_geometry_geom_idx
-    ON circles USING gist (wkb_geometry)
+    ON {schema}.circles USING gist (wkb_geometry)
     TABLESPACE pg_default;

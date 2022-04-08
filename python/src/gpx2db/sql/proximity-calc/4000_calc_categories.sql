@@ -5,8 +5,8 @@
 ----   lines in same track, with same frequency
 
 --- Create table
-drop table if exists frequency_lines;
-create table frequency_lines
+drop table if exists {schema}.frequency_lines;
+create table {schema}.frequency_lines
 (
     point_id_start integer not NULL,
     point_id_end integer not NULL,
@@ -17,18 +17,18 @@ create table frequency_lines
     constraint freq_lines_pk primary key (point_id_start )
 )
 tablespace pg_default;
-create index on frequency_lines(point_id_end);
+create index on {schema}.frequency_lines(point_id_end);
 
 -- first population
-insert into frequency_lines (
+insert into {schema}.frequency_lines (
 with fr as (
     select 
         np.point_id, 
         np.track_id, 
         np.segment_id, 
         f.freq 
-      from newpoints np
-      join count_circle_freq_all f on np.point_id = f.circle_id 
+      from {schema}.newpoints np
+      join {schema}.count_circle_freq_all f on np.point_id = f.circle_id 
 )
 select 
     f1.point_id, 
@@ -47,11 +47,11 @@ commit;
 
 -- update last column with a segment counter
 ---
-drop sequence if exists category_segment_seq;
-create sequence category_segment_seq;
+drop sequence if exists {schema}.category_segment_seq;
+create sequence {schema}.category_segment_seq;
 --select nextval('category_segment_seq');
 
-update frequency_lines tf set category_segment = 
+update {schema}.frequency_lines tf set category_segment = 
 (
 select 
 --f1.point_id_start, f1.point_id_end, f2.point_id_start f2_id, f1.track_id, f1.segment_id, f1.freq,
@@ -63,7 +63,7 @@ case when
     (f2.point_id_start is null) 
 then nextval('category_segment_seq')
 else currval('category_segment_seq') END as inc
-from frequency_lines f1
+from {schema}.frequency_lines f1
 left join frequency_lines f2 on f2.point_id_end = f1.point_id_start 
 where tf.point_id_start = f1.point_id_start
 ) ;

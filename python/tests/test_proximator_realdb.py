@@ -22,6 +22,7 @@ def test_cycle(monkeypatch):
     initdb_proximator.main()
 
     print(getcwd())
+    # TODO: test data should be in git
     testargs = [
         '',
         '..\\..\\Tracks\\Regiotours\\Regiotour-2020\\Bernd',

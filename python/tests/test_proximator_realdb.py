@@ -1,9 +1,9 @@
 from gpx2db import (
     initdb,
     initdb_proximator,
-    proximity_calc
+    proximity_calc,
+    export_geojson
 )
-from os import getcwd
 
 
 def test_proximity_core(monkeypatch):
@@ -21,7 +21,6 @@ def test_proximity_core(monkeypatch):
     monkeypatch.setattr("sys.argv", testargs)
     initdb_proximator.main()
 
-    print(getcwd())
     # TODO: test data should be in git
     testargs = [
         '',
@@ -30,3 +29,11 @@ def test_proximity_core(monkeypatch):
         's1']
     monkeypatch.setattr("sys.argv", testargs)
     proximity_calc.main()
+
+    testargs = [
+        '',
+        't1',
+        's1',
+        'testlabel']
+    monkeypatch.setattr("sys.argv", testargs)
+    export_geojson.main()

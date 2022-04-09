@@ -26,6 +26,7 @@ def main():
     global logger
     logger = setup_logging(args.debug)
     connstring = create_connection_string(args.database, args)
+    schema = args.schema
 
     # connect to db
     conn = connect_nice(connstring)
@@ -40,11 +41,11 @@ def main():
     (geometryList, categoryList) = (None, None)
     if args.mode == "category":
 
-        (geometryList, categoryList) = queryCategoryMode(cur)
+        (geometryList, categoryList) = queryCategoryMode(cur, schema)
 
     elif args.mode == 'plain':
 
-        (geometryList, categoryList) = queryPlainMode(cur, MAXCATEGORIES)
+        (geometryList, categoryList) = queryPlainMode(cur, schema, MAXCATEGORIES)
 
     legendFilePath = os.path.join(geodir, "legend.json")
     writeLegendFile(legendFilePath, categoryList)
@@ -72,6 +73,7 @@ def a_parse():
         parents=[getDbParentParser()]
     )
     parser.add_argument('database')
+    parser.add_argument('schema')
 
     parser.add_argument(
         'dataset_label',
@@ -135,13 +137,15 @@ def create_extend_metadata(directory, filename, label):
         json.dump(mdata, fp)
 
 
-def queryCategoryMode(cur):
+def queryCategoryMode(cur, schema):
 
     # read geojson
     cur.execute((
         "select category, ST_AsGeoJSON(ST_Collect(wkb_geometry)),"
-        " min(freq), max(freq) from track_segment_freq_categories "
-        "group by category order by category"))
+        " min(freq), max(freq) from {}.track_segment_freq_categories "
+        "group by category order by category".format(
+            schema
+        )))
     r = cur.fetchall()
 
     geometryList = []
@@ -157,11 +161,12 @@ def queryCategoryMode(cur):
     return (geometryList, categoryList)
 
 
-def queryPlainMode(cur, maxCategories):
+def queryPlainMode(cur, schema, maxCategories):
 
     # read geojson
     cur.execute(
-        "select id, ST_AsGeoJSON(wkb_geometry) from tracks order by id")
+        "select id, ST_AsGeoJSON(wkb_geometry) "
+        "from {}.tracks order by id".format(schema))
     r = cur.fetchall()
 
     geometryList = []

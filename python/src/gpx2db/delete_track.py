@@ -15,6 +15,7 @@ def main():
     # parse args
     args = a_parse()
     database_name = args.database
+    schema = args.schema
 
     logger = setup_logging(args.debug)
     connstring = create_connection_string(database_name, args)
@@ -23,10 +24,8 @@ def main():
 
     sqldir = os.path.join(
         os.path.dirname(__file__),
-        'gpx2db_pkg',
-        'gpx2db',
         'sql')
-    ex = ExecuteSQLFile(conn, sqldir)
+    ex = ExecuteSQLFile(conn, sqldir, schema=schema)
 
     ex.execFile('delete-track-base.sql', args=(args.track_id,))
     try:
@@ -45,6 +44,7 @@ def a_parse():
         parents=[getDbParentParser()])
 
     parser.add_argument('database')
+    parser.add_argument('schema')
     parser.add_argument('track_id',
                         help="id of track",
                         type=int)

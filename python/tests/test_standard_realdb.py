@@ -1,12 +1,12 @@
 from gpx2db import (
     initdb,
-    initdb_proximator,
-    proximity_calc
+    gpx2postgres,
+    list_tracks,
+    delete_track
 )
-from os import getcwd
 
 
-def test_proximity_core(monkeypatch):
+def test_non_proximity(monkeypatch):
 
     # create db
     testargs = ['', 'cd', 't1']
@@ -17,11 +17,6 @@ def test_proximity_core(monkeypatch):
     monkeypatch.setattr("sys.argv", testargs)
     initdb.main()
 
-    testargs = ['', 't1', 's1']
-    monkeypatch.setattr("sys.argv", testargs)
-    initdb_proximator.main()
-
-    print(getcwd())
     # TODO: test data should be in git
     testargs = [
         '',
@@ -29,4 +24,19 @@ def test_proximity_core(monkeypatch):
         't1',
         's1']
     monkeypatch.setattr("sys.argv", testargs)
-    proximity_calc.main()
+    gpx2postgres.main()
+
+    testargs = [
+        '',
+        't1',
+        's1']
+    monkeypatch.setattr("sys.argv", testargs)
+    list_tracks.main()
+
+    testargs = [
+        '',
+        't1',
+        's1',
+        '1']
+    monkeypatch.setattr("sys.argv", testargs)
+    delete_track.main()

@@ -1,4 +1,3 @@
-import sys
 import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
@@ -17,6 +16,7 @@ def main():
     # parse args
     args = a_parse()
     database_name = args.database
+    schema = args.schema
 
     logger = setup_logging(args.debug)
     connstring = create_connection_string(database_name, args)
@@ -24,7 +24,9 @@ def main():
     # get gpx filenames
     gpx_filelist = getfiles(args.dir_or_file)
     logger.info("Number of gpx files: {}".format(len(gpx_filelist)))
-    logger.info("Appending to database {}".format(database_name))
+    logger.info("Appending to database {} in schema {}".format(
+        database_name,
+        schema))
 
     conn = connect_nice(connstring)
 
@@ -32,7 +34,7 @@ def main():
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
     # Loop over files and import
-    gpximp = GpxImport(conn)
+    gpximp = GpxImport(conn, schema)
 
     exit_code = 0
     for fname in gpx_filelist:
@@ -55,7 +57,7 @@ def main():
                         " ".join(track_ids_created_s)
                     )
                 )
-    sys.exit(exit_code)
+    return(exit_code)
 
 
 # --------------------------------
@@ -71,6 +73,7 @@ def a_parse():
     parser.add_argument('dir_or_file',
                         help="GPX file or directory of GPX files")
     parser.add_argument('database')
+    parser.add_argument('schema')
 
     parser.add_argument(
         '-d',

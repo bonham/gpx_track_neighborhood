@@ -17,8 +17,11 @@ def main():
     connstring = create_connection_string(args.database, args)
 
     conn = connect_nice(connstring)
+    schema = args.schema
 
-    sql = 'select id, src, name from tracks order by id'
+    sql = 'select id, src, name from {}.tracks order by id'.format(
+        schema
+    )
     cur = conn.cursor()
     cur.execute(sql)
     result = cur.fetchall()
@@ -39,12 +42,12 @@ def main():
 def a_parse():
     parser = argparse.ArgumentParser(
         description=(
-            'Delete gpx track with given id from all database tables'
+            'list gpx track with given id'
         ),
         parents=[getDbParentParser()])
 
     parser.add_argument('database')
-
+    parser.add_argument('schema')
     parser.add_argument(
         '-d',
         '--debug',

@@ -6,7 +6,7 @@ from gpx2db.utils import (
     create_connection_string,
     connect_nice
 )
-from gpx2db.proximity_calc import (
+from gpx2db.Transform import (
     Transform
 )
 

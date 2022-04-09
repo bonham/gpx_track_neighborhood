@@ -11,11 +11,6 @@ from gpx2db.utils import (
 from gpx2db.gpximport import GpxImport
 import traceback
 
-# constants
-PG_USER = "postgres"
-TRACKS_TABLE = "tracks"
-TRACKPOINTS_TABLE = "track_points"
-
 
 def main():
 

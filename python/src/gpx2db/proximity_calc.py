@@ -1,167 +1,145 @@
 import os
-from .utils import ExecuteSQLFile, read_snip_coords
-import logging
+import argparse
+import psycopg2 as pg2
+from gpx2db.utils import (
+    setup_logging,
+    vac, getfiles, getDbParentParser,
+    create_connection_string,
+    connect_nice)
+from gpx2db.Transform import (
+    Transform,
+    RADIUS_DEFAULT,
+    TRACKS_TABLE,
+    TRACKPOINTS_TABLE)
+from gpx2db.gpximport import GpxImport
 
-RADIUS_DEFAULT = 30
-TRACKS_TABLE = "tracks"
-TRACKPOINTS_TABLE = "track_points"
+# constants
+PG_USER = "postgres"
 
 
-class Transform:
+def main():
 
-    def __init__(self, conn, schema):
+    # parse args
+    args = a_parse()
+    database_name = args.database
+    schema = args.schema
 
-        self.conn = conn
-        self.schema = schema
+    logger = setup_logging(args.debug)
+    connstring = create_connection_string(database_name, args)
 
-        sqldir = os.path.join(os.path.dirname(
-            __file__), 'sql', 'proximity-calc')
-        self.executor = ExecuteSQLFile(
-            conn,
-            base_dir=sqldir,
-            schema=self.schema,
-            )
-        self.logger = logging.getLogger(__name__)
+    # get gpx filenames
+    gpx_filelist = getfiles(args.dir_or_file)
+    logger.info("Number of gpx files: {}".format(len(gpx_filelist)))
 
-    def create_structure(self):
+    logger.info("Appending to database {}".format(database_name))
 
-        self.executor.execFile(
-            '0100_create_newpoints_table.sql')
-        self.executor.execFile(
-            '0200_create_segments_table.sql')
-        self.executor.execFile(
-            '0400_create_segments_table_idx.sql')
-        self.executor.execFile(
-            '1000_cr_intersections_table.sql')
-        self.executor.execFile(
-            '1200_create_intersect_table_idx.sql')
-        self.executor.execFile(
-            '1300_create_circles_table.sql')
-        self.executor.execFile(
-            '3000_view_gtype.sql')
-        self.executor.execFile(
-            '3100_view_ml_debug.sql')
-        self.executor.execFile(
-            '3200_view_count_ml_consecutive.sql')
-        self.executor.execFile(
-            '3300_view_count_linestrings.sql')
-        self.executor.execFile(
-            '3400_view_count_circle_freq_all.sql')
+    # connect to newly created db
+    conn = connect_nice(connstring)
+    conn.set_isolation_level(
+        pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
-    def prepare_segments(self, track_id):
+    # connection for vacuum
+    conn_vac = connect_nice(connstring)
+    conn_vac.set_isolation_level(
+        pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
+    vac(conn_vac, "{}.{}".format(schema, TRACKS_TABLE))
+    vac(conn_vac, "{}.{}".format(schema, TRACKPOINTS_TABLE))
 
-        clip_coords = read_snip_coords()
-        whereclause = gpx_clip_where_clause(clip_coords)
+    transform = Transform(conn, schema)
 
-        self.executor.execFile(
-            '0100_joinsegments_create_newpoints.sql',
-            args=(whereclause, track_id,))
+    # Loop over files and import
+    gpximp = GpxImport(conn, schema)
+    totalfiles = len(gpx_filelist)
 
-        self.executor.execFile(
-            '0250_insert_enriched_points.sql',
-            args=(track_id,))
+    for idx, fname in enumerate(gpx_filelist):
 
-        self.executor.execFile(
-            '0300_insert_segments.sql',
-            args=(track_id,))
-
-    def create_circles(self, radius, track_id):
-
-        self.executor.execFile(
-            '1310_insert_circles.sql',
-            args=(radius, track_id)
-        )
-
-    def do_intersection(self, new_track_id):
-
-        where_new_points = "and np.track_id = {}".format(
-            new_track_id
-        )
-        # all existing segments (including new ones) with circles of new track
-        self.logger.info("... calc for new track")
-        self.executor.execFile(
-            '2000_insert_intersections.sql',
-            args=(
-                where_new_points,
+        fileno = idx + 1
+        track_ids_created = gpximp.import_gpx_file(fname)
+        track_basename = os.path.basename(fname)
+        logger.info(
+            "\n\n=== Processing file no {}/{}: {}".format(
+                fileno,
+                totalfiles,
+                track_basename
             )
         )
 
-        # all existing circles (excluding new ones) with segments of new track
-        self.logger.info("... calc for existing tracks")
-        where_new_segments = \
-            " and se.track_id = {} and np.track_id != {}".format(
-                new_track_id,
-                new_track_id)
-        self.executor.execFile(
-            '2000_insert_intersections.sql',
-            args=(
-                where_new_segments,
-            )
-        )
+        for new_track_id in track_ids_created:
 
-    def calc_categories(self):
+            logger.info("Preparing track segments")
+            transform.prepare_segments(new_track_id)
+            vac(conn_vac, "{}.newpoints".format(schema))
+            vac(conn_vac, "{}.newsegments".format(schema))
 
-        self.executor.execFile('4000_calc_categories.sql')
-        self.executor.execFile('4100_create_category_table.sql')
+            all_point_ids = transform.get_point_ids()
+            new_point_ids = transform.get_point_ids(tracks=[new_track_id])
 
-    def get_segment_ids(self, tracks=[]):
-        "Get segment ids for all or given track"
+            all_segment_ids = transform.get_segment_ids()
+            new_segment_ids = transform.get_segment_ids([new_track_id])
 
-        cur = self.conn.cursor()
+            logger.info(
+                "New track no {} has {} segments and {} points".format(
+                    new_track_id,
+                    len(new_segment_ids),
+                    len(new_point_ids)
+                ))
+            logger.info(
+                "Joining with a total of {} segments and {} points".format(
+                    len(all_segment_ids),
+                    len(all_point_ids)
+                ))
 
-        sql = "select segment_id from newsegments "
-        if tracks:
-            sql += "where track_id " + self.in_clause(tracks)
+            logger.info("Creating circles from points")
+            transform.create_circles(args.radius, new_track_id)
+            vac(conn_vac, "{}.circles".format(
+                schema
+            ))
 
-        cur.execute(sql)
-        r = cur.fetchall()
-        segment_id_list = [x[0] for x in r]
+            logger.info("Do intersections")
+            transform.do_intersection(new_track_id)
 
-        return segment_id_list
+    logger.info("\n=== Calculating categories")
+    transform.calc_categories()
 
-    def get_point_ids(self, tracks=[]):
-        "Get point ids for all or given tracks"
-
-        cur = self.conn.cursor()
-
-        sql = "select point_id from newpoints"
-
-        if tracks:
-            sql += " where track_id " + self.in_clause(tracks)
-
-        cur.execute(sql)
-        r = cur.fetchall()
-        point_id_list = [x[0] for x in r]
-
-        return point_id_list
-
-    def in_clause(self, values_list):
-
-        # convert to strings
-        values_list = map(str, values_list)
-
-        r = "IN (" + ",".join(values_list) + ")"
-        return r
+# --------------------------------
 
 
-def gpx_clip_where_clause(latlon_pair_list):
-    "Convert latlon pairs in a where clause"
-    "To cut out all points 1km around the locations"
+def a_parse():
+    parser = argparse.ArgumentParser(
+        description=(
+            'Add GPX files from specified file or directory '
+            'to database and perform proximity calculation'
+        ),
+        parents=[getDbParentParser()])
 
-    clip_args = ["1 = 1"]  # pepare for missing latlon_pair_list
+    parser.add_argument('dir_or_file',
+                        help="GPX file or directory of GPX files")
+    parser.add_argument('database')
 
-    for pair in latlon_pair_list:
+    parser.add_argument(
+        '--radius',
+        help=(
+            "Radius in meters around a trackpoint, "
+            "where we search for nearby tracks. "
+            "Default is {}m").format(
+            RADIUS_DEFAULT), default=RADIUS_DEFAULT)
 
-        argstring = (
-            """
-                ST_Distance(
-                    tp.wkb_geometry::geography,
-                    ST_PointFromText('POINT({:s} {:s})', 4326)::geography
-                ) >= 1000
-            """
-        ).format(
-            pair[1], pair[0]
-        )
-        clip_args.append(argstring)
+    parser.add_argument(
+        '-d',
+        '--debug',
+        action='store_true',
+        help="Enable debug output"
+    )
+    parser.add_argument('schema')
 
-    return " AND ".join(clip_args)
+    args = parser.parse_args()
+
+    return args
+
+# --------------------------------
+
+
+###################################################
+if __name__ == "__main__":
+    # execute only if run as a script
+    main()

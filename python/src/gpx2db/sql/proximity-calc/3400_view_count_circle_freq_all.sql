@@ -5,7 +5,7 @@ SELECT
   sum(num) as freq
 from (
   select *
-  from count_ls
+  from {schema}.count_ls
   UNION ALL
   select *
   from {schema}.count_ml_consecutive

@@ -33,7 +33,7 @@ select
     	else null 
     end as marker,
     tp1.wkb_geometry
-from {schema}.clipped_points tp1 left join {schema}.clipped_points tp2
+from clipped_points tp1 left join clipped_points tp2
 on
     tp1.id = tp2.id + 1 -- vergleiche mit vorhergehendem punkt
 where
@@ -45,8 +45,8 @@ select
     track_id,
     track_segment_id_old, 
 	case when marker = 1
-		then nextval('joinsegments_seq')
-		else currval('joinsegments_seq')
+		then nextval('{schema}.joinsegments_seq')
+		else currval('{schema}.joinsegments_seq')
 	end as segment_id,
     wkb_geometry
 from base;

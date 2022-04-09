@@ -5,7 +5,7 @@ insert into {schema}.newpoints (
   wkb_geometry
 )
 SELECT
-  nextval('newpoints_seq'),
+  nextval('{schema}.newpoints_seq'),
   segment_id,
   track_id,
   wkb_geometry

@@ -10,11 +10,6 @@ from gpx2db.utils import (
     )
 from gpx2db.gpx2dblib import Gpx2db
 
-# constants
-PG_USER = "postgres"
-TRACKS_TABLE = "tracks"
-TRACKPOINTS_TABLE = "track_points"
-
 
 def main():
 

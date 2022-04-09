@@ -7,11 +7,11 @@ class Gpx2db:
 
     def __init__(self, database_connection, schema):
 
-        self.tracks_table = "tracks"
-        self.tracks_id_sequence = "tracks_id"
-        self.segments_table = "segments"
-        self.track_points_table = "track_points"
-        self.track_points_id_sequence = "track_points_id"
+        self.tracks_table = "{}.tracks".format(schema)
+        self.tracks_id_sequence = "{}.tracks_id".format(schema)
+        self.segments_table = "{}.segments".format(schema)
+        self.track_points_table = "{}.track_points".format(schema)
+        self.track_points_id_sequence = "{}.track_points_id".format(schema)
 
         self.conn = database_connection
         self.cur = self.conn.cursor()
@@ -41,7 +41,7 @@ class Gpx2db:
         self.create_sequence(self.track_points_id_sequence)
 
         sql_create_tracks_table = """
-            create table {}.{}
+            create table {}
             (
             id integer PRIMARY KEY,
             name varchar(2000),
@@ -54,21 +54,19 @@ class Gpx2db:
             wkb_geometry geometry(MultiLineString,4326)
             )
         """.format(
-            self.schema,
             self.tracks_table
         )
         cur.execute(sql_create_tracks_table)
         self.commit()
 
         sql_create_segments_table = """
-            create table {0}.{1}
+            create table {0}
             (
-            track_id integer REFERENCES {0}.{2} (id),
+            track_id integer REFERENCES {1} (id),
             track_segment_id integer NOT NULL,
             unique ( track_id, track_segment_id )
             )
         """.format(
-            self.schema,
             self.segments_table,
             self.tracks_table
         )
@@ -76,10 +74,10 @@ class Gpx2db:
         self.commit()
 
         sql_create_points_table = """
-            create table {0}.{1}
+            create table {}
             (
-            id integer PRIMARY KEY DEFAULT nextval('{0}.{2}'::regclass),
-            track_id integer REFERENCES {0}.{3} (id),
+            id integer PRIMARY KEY DEFAULT nextval('{}'::regclass),
+            track_id integer REFERENCES {} (id),
             track_segment_id integer not null,
             segment_point_id integer not null,
             elevation double precision,
@@ -87,7 +85,6 @@ class Gpx2db:
             unique ( track_id, track_segment_id, segment_point_id )
             )
         """.format(
-            self.schema,
             self.track_points_table,
             self.track_points_id_sequence,
             self.tracks_table
@@ -104,17 +101,18 @@ class Gpx2db:
             self.tracks_table,
         ]
         table_drop_commands = [
-            "drop table if exists {}.{}".format(
-                self.schema, i) for i in tables
-                ]
+            "drop table if exists {}".format(
+                i
+            ) for i in tables
+        ]
 
         sequences = [
             self.tracks_id_sequence,
             self.track_points_id_sequence
         ]
         sequence_drop_commands = [
-            "drop sequence if exists {}.{}".format(
-                self.schema, i
+            "drop sequence if exists {}".format(
+                i
                 ) for i in sequences]
 
         for sql in (table_drop_commands + sequence_drop_commands):
@@ -144,16 +142,14 @@ class Gpx2db:
 
     def create_sequence(self, sequence_name):
 
-        sql = "CREATE SEQUENCE {}.{}".format(
-            self.schema,
+        sql = "CREATE SEQUENCE {}".format(
             sequence_name)
         self.cur.execute(sql)
         self.commit()
 
     def get_nextval(self, sequence):
 
-        sql = "select nextval('{}.{}')".format(
-            self.schema,
+        sql = "select nextval('{}')".format(
             sequence)
         self.cur.execute(sql)
         row = self.cur.fetchone()
@@ -198,8 +194,7 @@ class Gpx2db:
         return track_ids_created
 
     def store_segment(self, track_id, segment_num):
-        sql = "insert into {}.{} values ({},{})".format(
-            self.schema,
+        sql = "insert into {} values ({},{})".format(
             self.segments_table,
             track_id,
             segment_num
@@ -229,11 +224,10 @@ class Gpx2db:
                 return "'{}'".format(s)
 
         sql = """
-            insert into {}.{}
+            insert into {}
             (id, name, hash, src, time, timelength)
             values({},{},{},{},{},{})
         """.format(
-            self.schema,
             self.tracks_table,
             rowid,
             wrapquotes(name),
@@ -247,13 +241,12 @@ class Gpx2db:
     def store_points(self, storelist):
 
         sql = (
-            "insert into {}.{} "
+            "insert into {} "
             "  ("
             "       track_id, track_segment_id,"
             "       segment_point_id, elevation, wkb_geometry"
             "  )"
             "  values ").format(
-            self.schema,
             self.track_points_table
         )
 

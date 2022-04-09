@@ -9,10 +9,11 @@ logger = logging.getLogger(__name__)
 
 class GpxImport:
 
-    def __init__(self, conn):
+    def __init__(self, conn, schema):
 
         self.conn = conn
-        self.g2d = Gpx2db(conn)
+        self.schema = schema
+        self.g2d = Gpx2db(conn, schema)
 
         self.hashes = self.load_hashes_from_db()
 
@@ -33,7 +34,9 @@ class GpxImport:
 
     def load_hashes_from_db(self):
 
-        sql = "select id, hash from tracks"
+        sql = "select id, hash from {}.tracks".format(
+            self.schema
+        )
         cur = self.conn.cursor()
         cur.execute(sql)
         r = cur.fetchall()

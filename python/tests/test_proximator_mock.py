@@ -1,4 +1,4 @@
-from gpx2db.proximity_calc import Transform
+from gpx2db.Transform import Transform
 
 
 class TestInitProximatorSchema:

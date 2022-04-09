@@ -1,14 +1,14 @@
 {
   "python.testing.pytestArgs": [
-    "gpx2db_pkg/tests"
+    "tests"
   ],
   "python.testing.unittestEnabled": false,
-  "python.testing.nosetestsEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.linting.flake8Enabled": true,
   "python.linting.enabled": true,
   "search.exclude": {
     "**/venv": true
   },
-  "python.linting.pylintEnabled": false
+  "python.linting.pylintEnabled": false,
+  "python.testing.cwd": "${workspaceFolder}/python/",
 }

@@ -1,0 +1,1 @@
+CREATE SCHEMA tm_meta  AUTHORIZATION postgres;

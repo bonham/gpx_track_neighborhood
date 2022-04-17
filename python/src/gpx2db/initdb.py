@@ -1,3 +1,4 @@
+import os
 import argparse
 import psycopg2 as pg2
 from gpx2db.utils import (
@@ -6,9 +7,15 @@ from gpx2db.utils import (
     drop_db,
     create_db,
     setup_logging,
-    create_connection_string
+    create_connection_string,
+    ExecuteSQLFile
     )
 from gpx2db.gpx2dblib import Gpx2db
+
+SQL_DIR = os.path.join(
+    os.path.dirname(__file__),
+    'sql',
+    'initdb')
 
 
 def main():
@@ -25,13 +32,21 @@ def main():
 def subcommand_cd(args):
 
     admin_connstring = create_connection_string(PG_ADMIN_DB, args)
-    conn = connect_nice(admin_connstring)
-
-    conn.set_isolation_level(
-        pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
     drop_db(args.database, admin_connstring)
     create_db(args.database, admin_connstring)
+
+    connstring = create_connection_string(args.database, args)
+    conn = connect_nice(connstring)
+
+    executor = ExecuteSQLFile(
+        conn,
+        base_dir=SQL_DIR
+    )
+    executor.execFile('100_create_meta_schema.sql')
+    executor.execFile('110_create_sid_schema_table.sql')
+    conn.commit()
+    conn.close()
 
 
 def subcommand_cs(args):

@@ -108,14 +108,14 @@ def create_db(database_name, connstring):
 
 def exec_with_connect(sql, connstring):
 
-    sysDBconn = pg2.connect(connstring)
-    sysDBconn.set_isolation_level(
+    conn = pg2.connect(connstring)
+    conn.set_isolation_level(
         pg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)  # type: ignore
 
-    sysDBcur = sysDBconn.cursor()
+    cur = conn.cursor()
 
-    sysDBcur.execute(sql)
-    sysDBconn.close()
+    cur.execute(sql)
+    conn.close()
 
 
 def setup_logging(debug):

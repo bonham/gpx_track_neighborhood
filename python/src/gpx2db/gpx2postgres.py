@@ -17,6 +17,8 @@ def main():
     args = a_parse()
     database_name = args.database
     schema = args.schema
+    simplify_distance = args.simplify
+    force_append = args.force_append
 
     logger = setup_logging(args.debug)
     connstring = create_connection_string(database_name, args)
@@ -40,7 +42,11 @@ def main():
     for fname in gpx_filelist:
 
         try:
-            track_ids_created = gpximp.import_gpx_file(fname)
+            track_ids_created = gpximp.import_gpx_file(
+                fname,
+                simplify_dist=simplify_distance,
+                force_append=force_append)
+
         except Exception:
             exit_code = 1
             logger.error(
@@ -80,6 +86,22 @@ def a_parse():
         '--debug',
         action='store_true',
         help="Enable debug output"
+    )
+    parser.add_argument(
+        '-s',
+        '--simplify',
+        type=float,
+        required=False,
+        help=(
+            "Simplification distance"
+            " according to Ramer-Douglas-Peuckert algorithm"
+        )
+    )
+    parser.add_argument(
+        '-f',
+        '--force-append',
+        action='store_true',
+        help="Will add track to DB even when file was already uploaded before"
     )
     args = parser.parse_args()
 

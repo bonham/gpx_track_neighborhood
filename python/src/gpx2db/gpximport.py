@@ -42,7 +42,11 @@ class GpxImport:
         r = cur.fetchall()
         return {item[1]: item[0] for item in r}
 
-    def import_gpx_file(self, gpx_file_name, force_append=False):
+    def import_gpx_file(
+            self,
+            gpx_file_name,
+            force_append=False,
+            simplify_dist=None):
 
         honor_hashes = not force_append
         if honor_hashes and self.does_file_exist_in_db(gpx_file_name):
@@ -60,6 +64,8 @@ class GpxImport:
             with open(gpx_file_name, 'r', encoding='utf-8-sig') as gpx_fd:
                 gpx_o = gpxpy.parse(gpx_fd)
 
+            if simplify_dist is not None:
+                gpx_o.simplify(max_distance=simplify_dist)
             src_info = os.path.basename(gpx_file_name)
             logger.info("Loading {}".format(src_info))
             track_ids_created = self.g2d.load_gpx_file(

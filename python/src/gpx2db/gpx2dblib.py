@@ -12,6 +12,8 @@ class Gpx2db:
         self.segments_table = "{}.segments".format(schema)
         self.track_points_table = "{}.track_points".format(schema)
         self.track_points_id_sequence = "{}.track_points_id".format(schema)
+        self.config_table = "{}.config".format(schema)
+        self.config_id_sequence = "{}.config_id".format(schema)
 
         self.conn = database_connection
         self.cur = self.conn.cursor()
@@ -39,6 +41,7 @@ class Gpx2db:
 
         self.create_sequence(self.tracks_id_sequence)
         self.create_sequence(self.track_points_id_sequence)
+        self.create_sequence(self.config_id_sequence)
 
         sql_create_tracks_table = """
             create table {}
@@ -91,6 +94,23 @@ class Gpx2db:
         )
 
         cur.execute(sql_create_points_table)
+        self.commit()
+
+        sql_create_config_table = """
+            create table {}
+            (
+            id integer PRIMARY KEY DEFAULT nextval('{}'::regclass),
+            conftype varchar(40) not null,
+            key varchar(40) not null,
+            value varchar(40) not null,
+            unique ( conftype, key )
+            )
+        """.format(
+            self.config_table,
+            self.config_id_sequence,
+        )
+
+        cur.execute(sql_create_config_table)
         self.commit()
 
     def drop_objects(self):

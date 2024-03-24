@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +85,7 @@ class Gpx2db:
             track_segment_id integer not null,
             segment_point_id integer not null,
             elevation double precision,
+            point_time timestamp without time zone,
             wkb_geometry geometry(Point,4326),
             unique ( track_id, track_segment_id, segment_point_id )
             )
@@ -133,7 +135,7 @@ class Gpx2db:
         sequence_drop_commands = [
             "drop sequence if exists {}".format(
                 i
-                ) for i in sequences]
+            ) for i in sequences]
 
         for sql in (table_drop_commands + sequence_drop_commands):
             try:
@@ -157,7 +159,7 @@ class Gpx2db:
                 curs.execute(
                     "create extension "
                     "postgis"
-                    )
+                )
                 self.commit()
 
     def create_sequence(self, sequence_name):
@@ -264,36 +266,29 @@ class Gpx2db:
             "insert into {} "
             "  ("
             "       track_id, track_segment_id,"
-            "       segment_point_id, elevation, wkb_geometry"
+            "       segment_point_id, elevation, point_time, wkb_geometry"
             "  )"
-            "  values ").format(
+            "  values (%s, %s, %s, %s, %s, ST_GeomFromText('POINT(%s %s)', 4326))").format(
             self.track_points_table
         )
 
-        sql_value_list = []
         for storetuple in storelist:
 
             (point, track_id, track_seg_id, segment_point_id) = storetuple
 
-            point_wkt = "ST_GeomFromText('POINT({} {})', 4326)".format(
-                point.longitude,
-                point.latitude
-            )
+            elevation = point.elevation or None
 
-            elevation = point.elevation or 'NULL'
+            point_date = point.time or None
 
-            valuepart = "({},{},{},{},{})".format(
-                track_id,
-                track_seg_id,
-                segment_point_id,
-                elevation,
-                point_wkt
-            )
-
-            sql_value_list.append(valuepart)
-
-        sql += ",".join(sql_value_list)
-        self.cur.execute(sql)
+            self.cur.execute(sql, (track_id,
+                                   track_seg_id,
+                                   segment_point_id,
+                                   elevation,
+                                   point_date,
+                                   point.longitude,
+                                   point.latitude
+                                   )
+                             )
 
     def track_update_time(self, gpx, track_id, track, first_point_of_track):
 
@@ -327,10 +322,10 @@ class Gpx2db:
             update {}.tracks
             set  time = '{}'  where id = {}
             """.format(
-                self.schema,
-                alternate_time,
-                track_id
-            )
+            self.schema,
+            alternate_time,
+            track_id
+        )
         self.cur.execute(sql)
 
     def track_update_geometry(self, track_id):

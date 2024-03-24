@@ -66,6 +66,7 @@ class GpxImport:
 
             if simplify_dist is not None:
                 gpx_o.simplify(max_distance=simplify_dist)
+
             src_info = os.path.basename(gpx_file_name)
             logger.info("Loading {}".format(src_info))
             track_ids_created = self.g2d.load_gpx_file(

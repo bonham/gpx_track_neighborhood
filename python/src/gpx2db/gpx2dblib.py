@@ -13,6 +13,11 @@ class Gpx2db:
         self.segments_table = "{}.segments".format(schema)
         self.track_points_table = "{}.track_points".format(schema)
         self.track_points_id_sequence = "{}.track_points_id".format(schema)
+        self.track_points_table_tmp = "{}.track_points_tmp".format(schema)
+        self.track_points_id_sequence_tmp = "{}.track_points_id_tmp".format(
+            schema)
+        self.calculated_track_stats_tmp_view = "{}.calculated_track_stats_tmp".format(
+            schema)
         self.config_table = "{}.config".format(schema)
         self.config_id_sequence = "{}.config_id".format(schema)
 
@@ -42,6 +47,7 @@ class Gpx2db:
 
         self.create_sequence(self.tracks_id_sequence)
         self.create_sequence(self.track_points_id_sequence)
+        self.create_sequence(self.track_points_id_sequence_tmp)
         self.create_sequence(self.config_id_sequence)
 
         sql_create_tracks_table = """
@@ -55,6 +61,9 @@ class Gpx2db:
             length double precision,
             timelength integer,
             ascent double precision,
+            length_calc double precision,
+            timelength_calc integer,
+            ascent_calc double precision,
             wkb_geometry geometry(MultiLineString,4326)
             )
         """.format(
@@ -96,6 +105,62 @@ class Gpx2db:
         )
 
         cur.execute(sql_create_points_table)
+        self.commit()
+
+        sql_create_points_table_tmp = """
+            create table {}
+            (
+            id integer PRIMARY KEY DEFAULT nextval('{}'::regclass),
+            track_id integer,
+            track_segment_id integer not null,
+            segment_point_id integer not null,
+            elevation double precision,
+            point_time timestamp without time zone,
+            wkb_geometry geometry(Point,4326),
+            unique ( track_id, track_segment_id, segment_point_id )
+            )
+        """.format(
+            self.track_points_table_tmp,
+            self.track_points_id_sequence_tmp,
+        )
+
+        cur.execute(sql_create_points_table_tmp)
+        self.commit()
+
+        sql_create_calculated_track_stats_tmp = """
+            create view {} as
+            with base as (
+                select 
+                id, track_id, track_segment_id,
+                -- calculate time difference between two points	
+                point_time  - lag(point_time) over (partition by track_id, track_segment_id order by id) as point_interval,
+                -- distance in m between two points
+                ST_Distance(wkb_geometry::geography,LAG(wkb_geometry::geography) OVER ( partition by track_id, track_segment_id ORDER BY id)) as point_dist,
+                -- height distance between two points
+                elevation - lag(elevation) over (partition by track_id, track_segment_id order by id) as point_elevation
+                from {}
+            ),
+            med as (
+                select 
+                track_id, point_dist, point_elevation,
+                extract(epoch from point_interval) as point_interval_s,
+                (point_dist / 1000)  / (extract(epoch from point_interval) / 3600) as km_h_point
+                from base
+            )
+            select
+                track_id,
+                sum(point_dist) as length_calc, 
+                sum(point_interval_s) as timelength_calc,
+                sum(point_dist) * 3.6 / sum(point_interval_s) as speed_calc,
+                sum(greatest(0, point_elevation)) as ascent_calc
+            from med
+            where km_h_point >= 0.5
+            group by track_id         
+        """.format(
+            self.calculated_track_stats_tmp_view,
+            self.track_points_table_tmp
+        )
+        cur.execute(sql_create_calculated_track_stats_tmp)
         self.commit()
 
         sql_create_config_table = """
@@ -212,6 +277,7 @@ class Gpx2db:
             self.track_update_geometry(track_id)
             self.track_update_length(track_id)
             self.track_update_ascent(track_id)
+            self.track_update_timelength(track_id)
             self.commit()
         return track_ids_created
 
@@ -395,3 +461,24 @@ class Gpx2db:
         """.format(track_id, self.schema)
 
         self.cur.execute(sql)
+
+    def track_update_timelength(self, track_id):
+
+        # problem: das hier zählt 5:49h , aber das hier: http://localhost:4000/tm/track/76/sid/michatest1 zählt 5:42h
+        sql = """
+
+            with base as (
+                select
+                track_id, track_segment_id,
+                min(point_time) as "min",
+                max(point_time) as "max",
+                max(point_time)  - min(point_time) as duration
+                from michatest1.track_points 
+                where track_id = 76
+                group by track_id, track_segment_id
+                order by track_id, track_segment_id
+            )
+            select track_id, sum(duration) from base
+            group by track_id        
+
+        """

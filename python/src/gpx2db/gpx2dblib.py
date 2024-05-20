@@ -16,6 +16,8 @@ class Gpx2db:
         self.track_points_table_tmp = "{}.track_points_tmp".format(schema)
         self.track_points_id_sequence_tmp = "{}.track_points_id_tmp".format(
             schema)
+        self.calculated_track_stats_view = "{}.calculated_track_stats".format(
+            schema)
         self.calculated_track_stats_tmp_view = "{}.calculated_track_stats_tmp".format(
             schema)
         self.config_table = "{}.config".format(schema)
@@ -127,7 +129,7 @@ class Gpx2db:
         cur.execute(sql_create_points_table_tmp)
         self.commit()
 
-        sql_create_calculated_track_stats_tmp = """
+        sql_create_calculated_track_stats_sql_template = """
             create view {} as
             with base as (
                 select 
@@ -144,7 +146,10 @@ class Gpx2db:
                 select 
                 track_id, point_dist, point_elevation,
                 extract(epoch from point_interval) as point_interval_s,
-                (point_dist / 1000)  / (extract(epoch from point_interval) / 3600) as km_h_point
+                case when base.point_interval = interval '0 seconds'
+                    then null
+                    else base.point_dist / 1000::double precision / (date_part('epoch'::text, base.point_interval) / 3600::double precision)
+                end AS km_h_point
                 from base
             )
             select
@@ -156,11 +161,19 @@ class Gpx2db:
             from med
             where km_h_point >= 0.5
             group by track_id         
-        """.format(
+        """
+
+        # create view on points table
+        cur.execute(sql_create_calculated_track_stats_sql_template.format(
+            self.calculated_track_stats_view,
+            self.track_points_table
+        ))
+        # create view on points_tmp table
+        cur.execute(sql_create_calculated_track_stats_sql_template.format(
             self.calculated_track_stats_tmp_view,
             self.track_points_table_tmp
-        )
-        cur.execute(sql_create_calculated_track_stats_tmp)
+        ))
+
         self.commit()
 
         sql_create_config_table = """

@@ -74,6 +74,12 @@ class Gpx2db:
         cur.execute(sql_create_tracks_table)
         self.commit()
 
+        sql_create_hash_index = """
+           CREATE INDEX hash_idx ON {} (hash)
+        """.format(self.tracks_table)
+        cur.execute(sql_create_hash_index)
+        self.commit()
+
         sql_create_segments_table = """
             create table {0}
             (
@@ -129,6 +135,7 @@ class Gpx2db:
         cur.execute(sql_create_points_table_tmp)
         self.commit()
 
+        # see below: Anmerkungen zum problem
         sql_create_calculated_track_stats_sql_template = """
             create view {} as
             with base as (
@@ -145,9 +152,11 @@ class Gpx2db:
             med as (
                 select 
                 track_id, point_dist, point_elevation,
+                --- convert interval type to seconds
                 extract(epoch from point_interval) as point_interval_s,
+                --- avoid division by zero:
                 case when base.point_interval = interval '0 seconds'
-                    then null
+                    then null::double precision
                     else base.point_dist / 1000::double precision / (date_part('epoch'::text, base.point_interval) / 3600::double precision)
                 end AS km_h_point
                 from base
@@ -159,7 +168,11 @@ class Gpx2db:
                 sum(point_dist) * 3.6 / sum(point_interval_s) as speed_calc,
                 sum(greatest(0, point_elevation)) as ascent_calc
             from med
-            where km_h_point >= 0.5
+            where
+                --- when points do not have timestamps then speed is null
+                km_h_point is null 
+                --- only use points from 'active move'
+                or km_h_point >= 0.5
             group by track_id         
         """
 
@@ -495,3 +508,126 @@ class Gpx2db:
             group by track_id        
 
         """
+
+
+""" Anmerkungen zum Problem mit berechnung von länge, distanz, höhe zwischen punkten:
+
+wir berechnen folgendes selbst aus den punkten
+
+- zeit aktiv
+- gefahrene km
+- geschwindigkeit
+
+Zeit aktiv wird berechnet aus: distanz zwischen zwei punkten die schneller als 0.5 kmh befahren wurde
+
+Nach simplification des tracks werden passagen mit niedriger geschwindigkeit nicht mehr zuverlässig erkannt,
+da durch das entfernen von punkten auf der selben stelle plötzlich eine höhere geschwindigkeit berechnet wird.
+
+elevation wird besser nach simplification berechnet ( kommt weniger raus )
+
+--- vergleichs - sql ( more below )
+
+with simple1 as (
+	select track_id, track_segment_id,
+	ST_Simplify(ST_MakeLine(wkb_geometry order by id), 0.00001) as wkb_s
+	from michatest1.track_points tp
+	group by track_id, track_segment_id
+),
+reducedpoints as (
+	select ST_DumpPoints(wkb_s) as dp
+	from simple1
+),
+joinbase as (
+	select (dp).geom as wkb_geometry from reducedpoints
+),
+union_points as (
+	select id, 's' as ptype,
+	track_id, track_segment_id, point_time, elevation, wkb_geometry
+	from michatest1.track_points
+	where wkb_geometry in ( select wkb_geometry from joinbase)
+	union
+	select id, 'o' as ptype,
+	track_id, track_segment_id, point_time, elevation, wkb_geometry
+	from michatest1.track_points
+),
+
+base as (
+	select 
+	id, ptype, track_id, track_segment_id,
+	point_time as pt,
+	-- calculate time difference between two points	
+	point_time  - lag(point_time) over (partition by track_id, ptype, track_segment_id order by id) as point_interval,
+	-- distance in m between two points
+	ST_Distance(wkb_geometry::geography,LAG(wkb_geometry::geography) OVER ( partition by track_id, ptype, track_segment_id ORDER BY id)) as point_dist,
+	-- elevation between two points
+	elevation - lag(elevation) over (partition by track_id, ptype, track_segment_id order by id) as point_elevation
+	from union_points
+),
+med as (
+	select 
+	track_id, ptype, point_interval, point_dist, point_elevation,
+	(extract(epoch from point_interval)) as point_interval_s,
+	round(((point_dist / 1000)  / (extract(epoch from point_interval) / 3600))::numeric, 1) as km_h
+	from base
+),
+result1 as (
+select
+	track_id,
+	ptype,
+	t.src,
+	count(*) as numpoints,
+	to_char((t.timelength || ' second')::interval,'HH24:MI' )  as origtimelength,
+	to_char(sum(point_interval),'HH24:MI') as filtered_timelength, 
+	-- deviation in percent
+	t.timelength,
+	round(sum(point_interval_s)::numeric,1) as filtered_timelength_s,
+	round(((sum(point_interval_s) / t.timelength)-1)::numeric,2) as deviation,
+	round((sum(point_dist) / 1000)::numeric, 1) as km,
+	round((sum(point_dist) * 3.6 / sum(point_interval_s))::numeric, 1) as km_h,
+	round((sum(point_dist) * 3.6 / t.timelength)::numeric, 1) as km_h_orig,
+	round((t.ascent)::numeric,1) as ascent_orig,
+	round((sum(greatest(0, point_elevation)))::numeric,1) as ascent_calc
+	
+from med inner join michatest1.tracks t
+on med.track_id = t.id
+where km_h >= 0.5
+group by track_id, ptype, t.src, t.timelength, t.ascent
+)
+select *
+from result1 
+order by track_id, ptype
+
+
+
+--- einfaches abfragen
+-- länge, dauer, geschw aus track
+with
+base as (
+	select 
+	id, track_id, track_segment_id,
+	-- calculate time difference between two points	
+	point_time  - lag(point_time) over (partition by track_id, track_segment_id order by id) as point_interval,
+	-- distance in m between two points
+	ST_Distance(wkb_geometry::geography,LAG(wkb_geometry::geography) OVER ( partition by track_id, track_segment_id ORDER BY id)) as point_dist
+	from michatest1.track_points
+),
+med as (
+	select 
+	track_id, point_interval, point_dist,
+	extract(epoch from point_interval) as point_interval_s,
+	(point_dist / 1000)  / (extract(epoch from point_interval) / 3600) as km_h_point
+	from base
+)
+select
+	track_id,
+	sum(point_interval) as timelength,
+	sum(point_dist) / 1000 as km,
+	sum(point_dist) * 3.6 / sum(point_interval_s) as km_h
+from med
+where km_h_point >= 0.5
+and track_id = 141
+group by track_id
+
+
+
+"""
